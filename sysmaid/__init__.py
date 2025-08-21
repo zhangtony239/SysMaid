@@ -1,5 +1,6 @@
 import ctypes
 import logging
+import os
 from .i18n import get_text
 from .maid import attend, start
 from .action.kill_proc import kill_process
@@ -29,10 +30,14 @@ def _is_admin():
     except:  # noqa: E722
         return False
 
-# Library requires Admin privileges to correctly access window information.
-if not _is_admin():
-    ctypes.windll.user32.MessageBoxW(0, get_text("init.admin.error.message"), get_text("init.admin.error.title"), 0x10)
-    exit(0)
+# Library requires Admin privileges.
+# Skip this check in CI environments where admin rights are not available.
+if "CI" in os.environ:
+    logger.warning(get_text("init.admin.skip.message"))
+else:
+    if not _is_admin():
+        ctypes.windll.user32.MessageBoxW(0, get_text("init.admin.error.message"), get_text("init.admin.error.title"), 0x10)
+        exit(0)
 
 __all__ = [
     "attend",

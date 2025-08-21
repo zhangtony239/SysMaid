@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "SysMaid"
+version = "0.1.0"
+authors = [
+  { name="Tony", email="tony@example.com" },
+]
+description = "A utility for system automation and management."
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "WMI",
+    "pywin32",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest",
+]
