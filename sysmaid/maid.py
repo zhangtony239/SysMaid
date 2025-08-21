@@ -82,6 +82,15 @@ class ProcessWatcher:
             self._watchdogs['is_exited'] = dog
         return self._watchdogs['is_exited'].is_exited
 
+    @property
+    def is_running(self):
+        if 'is_running' not in self._watchdogs:
+            from .condiction.is_running import RunningWatchdog
+            dog = RunningWatchdog(self._process_name)
+            _EventManager.add_watchdog(dog)
+            self._watchdogs['is_running'] = dog
+        return self._watchdogs['is_running'].is_running
+
 def attend(process_name):
     return ProcessWatcher(process_name)
 

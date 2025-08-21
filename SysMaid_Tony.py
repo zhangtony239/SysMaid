@@ -8,7 +8,7 @@ if __name__ == "__main__":
         maid.kill_process('Canva.exe')
 
     CrossDeviceResume = maid.attend('CrossDeviceResume.exe')
-    @CrossDeviceResume.has_no_window
+    @CrossDeviceResume.is_running
     def _():
         maid.kill_process('CrossDeviceResume.exe')
 

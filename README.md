@@ -3,6 +3,8 @@
 
 **SysMaid** 是一个为 Windows 设计的高阶 `win32 api` 抽象层，允许用户通过编写简单的 Python 脚本来管理和优化系统行为。它就像一个本地的 uBlock Origin，但专注于进程管理，旨在解决那些“不得不用的”后台软件问题，并致力于成为 Windows 下最全面的 AutoRun 生态系统。
 
+**下载的文件不见了？**：由于 SysMaid 的行为涉及系统级的进程监控和操作，某些杀毒软件（如 Windows Defender）可能会将其误报为潜在威胁。为了确保程序正常运行，强烈建议将您的脚本、打包后的 `.exe` 文件或其所在目录添加到杀毒软件的白名单中。
+
 ## 核心功能
 
 *   **简洁的规则定义**：通过 Python 装饰器，直观地定义监控规则。
@@ -42,6 +44,12 @@ if __name__ == "__main__":
     @GameViewer.is_exited
     def _():
         maid.stop_service('GameViewerService')
+
+    # 规则3：当 CrossDeviceResume.exe 进程运行时，结束它
+    CrossDeviceResume = maid.attend('CrossDeviceResume.exe')
+    @CrossDeviceResume.is_running
+    def _():
+        maid.kill_process('CrossDeviceResume.exe')
 
     # 设置日志级别并启动监控
     maid.set_log_level('INFO')
