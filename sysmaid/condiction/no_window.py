@@ -1,6 +1,6 @@
 import logging
 import wmi
-from ..maid import Watchdog, _event_manager
+from ..maid import Watchdog
 
 logger = logging.getLogger(__name__)
 
@@ -43,8 +43,3 @@ class NoWindowWatchdog(Watchdog):
                         
         except wmi.x_wmi as e:
             logger.error(f"WMI query for '{process_name}' failed: {e}")
-
-def attend(process_name):
-    dog = NoWindowWatchdog(process_name)
-    _event_manager.add_watchdog(dog)
-    return dog

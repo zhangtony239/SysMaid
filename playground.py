@@ -13,9 +13,9 @@ if __name__ == "__main__":
         maid.kill_process(CrossDeviceResume)
 
     GameViewer = maid.attend('GameViewer.exe')
-    @GameViewer.has_no_window
+    @GameViewer.is_exited
     def _():
-
+        maid.stop_service('GameViewerService')
 
     maid.set_log_level('INFO')
     maid.start()

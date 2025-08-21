@@ -1,9 +1,9 @@
 import ctypes
 import logging
-from .maid import _event_manager
 from .i18n import get_text
-from .condiction.no_window import attend
+from .maid import attend, start
 from .action.kill_proc import kill_process
+from .action.stop_service import stop_service
 
 logger = logging.getLogger(__name__)
 
@@ -23,10 +23,6 @@ def set_log_level(level):
         datefmt='%H:%M:%S'
     )
 
-def start():
-    logger.info("SysMaid service starting...")
-    _event_manager.start()
-
 def _is_admin():
     try:
         return ctypes.windll.shell32.IsUserAnAdmin()
@@ -41,6 +37,7 @@ if not _is_admin():
 __all__ = [
     "attend",
     "kill_process",
+    "stop_service",
     "start",
     "set_log_level",
 ]
