@@ -17,5 +17,5 @@ if __name__ == "__main__":
     def _():
         maid.stop_service('GameViewerService')
 
-    maid.set_log_level('INFO')
+    maid.set_log_level('ERROR')
     maid.start()
