@@ -67,37 +67,6 @@ nuitka --standalone --include-data-dir=sysmaid/i18n=sysmaid/i18n --windows-uac-a
 
 打包成功后，你会在 `your_rules.dist` 文件夹中找到生成的 `.exe` 文件。你可以将这个文件或其快捷方式放入系统的“启动”文件夹，即可实现开机自启。
 
-## 使用示例
-
-在 [`SysMaid_Tony.py`](SysMaid_Tony.py) 中，我们提供了一个现实世界中的使用示例，用于管理一些常见软件的后台行为：
-
-```python
-import sysmaid as maid
-
-if __name__ == "__main__":
-
-    # 当 Canva 没有可见窗口时，结束其后台进程
-    Canva = maid.attend('Canva.exe')
-    @Canva.has_no_window
-    def _():
-        maid.kill_process('Canva.exe')
-
-    # 同样处理微软的跨设备体验服务
-    CrossDeviceResume = maid.attend('CrossDeviceResume.exe')
-    @CrossDeviceResume.has_no_window
-    def _():
-        maid.kill_process('CrossDeviceResume.exe')
-
-    # 当 GameViewer 退出后，停止其后台服务以释放资源
-    GameViewer = maid.attend('GameViewer.exe')
-    @GameViewer.is_exited
-    def _():
-        maid.stop_service('GameViewerService')
-
-    maid.set_log_level('INFO')
-    maid.start()
-```
-
 ## 未来规划
 
 SysMaid 的目标不止于简单的进程管理。我们希望将其发展成为 Windows 下最全面的 **AutoRun 生态**，包括但不限于：
@@ -113,4 +82,4 @@ SysMaid 的目标不止于简单的进程管理。我们希望将其发展成为
 
 ## 许可证
 
-本项目基于 [MIT License](LICENSE) 开源。
+本项目基于 [GPLv3 License](LICENSE) 开源。
