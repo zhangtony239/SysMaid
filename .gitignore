@@ -1,3 +1,4 @@
 /.conda
 /playground.build
 /playground.dist
+/sysmaid/__pycache__
