@@ -13,7 +13,7 @@
 
 ## 一键启动
 
-如果大家不像那么麻烦，也欢迎提交pull request共同构建Tony.py的rules版本，让它成为一个大而全的拦截规则。从而在本仓库的release中，大家可以直接下载我nuitka好的exe就能获得一个更干净的系统环境。
+欢迎大家提交pull request共同构建Tony.py这个rules版本，让它成为一个大而全的拦截规则。从而在本仓库的release中，大家可以直接下载我nuitka好的exe就能获得一个更干净的系统环境。
 
 ## 从头开始
 
