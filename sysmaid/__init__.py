@@ -34,7 +34,8 @@ def _is_admin():
 
 # Library requires Admin privileges to correctly access window information.
 if not _is_admin():
-    raise PermissionError("SysMaid requires administrator privileges to run correctly. Please restart your script with administrator rights.")
+    ctypes.windll.user32.MessageBoxW(0, "SysMaid 需要管理员权限才能正常运行。", "权限错误", 0x10)
+    exit(0)
 
 __all__ = [
     "attend",
