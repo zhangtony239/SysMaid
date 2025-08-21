@@ -1,7 +1,7 @@
 # SysMaid
 [简体中文](README.md)
 
-**SysMaid** is a high-level `win32 api` abstraction layer for Windows, allowing users to manage and optimize system behavior by writing simple Python scripts. It's like a local uBlock Origin, but focused on process management, designed to solve issues with "must-use" background software and aiming to become the most comprehensive AutoRun ecosystem on Windows.
+**SysMaid** is a high-level win32 api abstraction layer for Windows, allowing users to manage and optimize system behavior by writing simple Python scripts. It's like the uBlock Origin of process management, aiming to solve the issue of background abuse by "must-use software" and striving to become the most comprehensive AutoRun ecosystem on Windows.
 <br /><br />
 
 #### Downloaded file has disappeared?
