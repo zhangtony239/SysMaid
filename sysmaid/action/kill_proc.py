@@ -4,8 +4,7 @@ import pythoncom
 
 logger = logging.getLogger(__name__)
 
-def kill_process(watchdog_instance):
-    process_name = watchdog_instance.process_name
+def kill_process(process_name):
     logger.info(f"Executing kill for '{process_name}'.")
     try:
         pythoncom.CoInitialize()
