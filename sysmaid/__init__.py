@@ -1,6 +1,14 @@
 import ctypes
 import logging
-from .taskkill import attend, kill, start
+from .maid import _event_manager
+from .condiction.no_window import attend
+from .action.kill_proc import kill
+
+logger = logging.getLogger(__name__)
+
+def start():
+    logger.info("SysMaid service starting...")
+    _event_manager.start()
 
 def _is_admin():
     try:
