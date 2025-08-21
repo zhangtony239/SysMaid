@@ -1,4 +1,5 @@
 # SysMaid
+[English](README_en.md)
 
 **SysMaid** 是一个为 Windows 设计的高阶 `win32 api` 抽象层，允许用户通过编写简单的 Python 脚本来管理和优化系统行为。它就像一个本地的 uBlock Origin，但专注于进程管理，旨在解决那些“不得不用的”后台软件问题，并致力于成为 Windows 下最全面的 AutoRun 生态系统。
 
