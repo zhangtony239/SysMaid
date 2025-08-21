@@ -1,4 +1,5 @@
-/.conda
-/playground.build
-/playground.dist
-/sysmaid/__pycache__
+/.conda/
+/playground.build/
+/playground.dist/
+__pycache__/
+.vscode/
