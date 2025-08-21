@@ -1,1 +1,2 @@
 WMI
+pywin32
