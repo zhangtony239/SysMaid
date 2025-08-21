@@ -1,6 +1,7 @@
 import ctypes
 import logging
 from .maid import _event_manager
+from .i18n import get_text
 from .condiction.no_window import attend
 from .action.kill_proc import kill
 
@@ -34,7 +35,7 @@ def _is_admin():
 
 # Library requires Admin privileges to correctly access window information.
 if not _is_admin():
-    ctypes.windll.user32.MessageBoxW(0, "SysMaid 需要管理员权限才能正常运行。", "权限错误", 0x10)
+    ctypes.windll.user32.MessageBoxW(0, get_text("init.admin.error.message"), get_text("init.admin.error.title"), 0x10)
     exit(0)
 
 __all__ = [

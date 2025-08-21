@@ -1,0 +1,4 @@
+{
+  "init.admin.error.title": "权限错误",
+  "init.admin.error.message": "SysMaid 需要管理员权限才能正常运行。"
+}
