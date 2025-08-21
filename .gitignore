@@ -1,5 +1,5 @@
 /.conda/
-/playground.build/
-/playground.dist/
+/*.build/
+/*.dist/
 __pycache__/
 .vscode/
