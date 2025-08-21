@@ -2,8 +2,11 @@
 [简体中文](README.md)
 
 **SysMaid** is a high-level `win32 api` abstraction layer for Windows, allowing users to manage and optimize system behavior by writing simple Python scripts. It's like a local uBlock Origin, but focused on process management, designed to solve issues with "must-use" background software and aiming to become the most comprehensive AutoRun ecosystem on Windows.
+<br /><br />
 
-**Downloaded file has disappeared?**: Due to SysMaid's behavior involving system-level process monitoring and operations, some antivirus software (like Windows Defender) may misreport it as a potential threat. To ensure the program runs correctly, it is strongly recommended to add your script, the packaged `.exe` file, or its directory to your antivirus software's whitelist.
+#### Downloaded file has disappeared?
+
+Due to SysMaid's behavior involving system-level process monitoring and operations, some antivirus software (like Windows Defender) may misreport it as a potential threat. To ensure the program runs correctly, it is strongly recommended to add your script, the packaged `.exe` file, or its directory to your antivirus software's whitelist.
 
 ## Core Features
 
