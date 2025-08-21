@@ -5,7 +5,8 @@ if __name__ == "__main__":
     
     @Canva.has_no_window
     def taskkill():
-        print("Canva process has no window, terminating...")
         maid.kill(Canva)
+
+    WeMeet = maid.Setup('WeMeet.exe')
 
     maid.start()

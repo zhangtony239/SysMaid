@@ -55,7 +55,7 @@ class Watchdog:
     def __init__(self, process_name):
         self.process_name = process_name
         self._callbacks = {}
-        self._zombie_candidates = {} # {pid: checks_count}
+        self._no_window_checks_count = 0
         self.GRACE_PERIOD = 3 # 3 seconds
 
     def has_no_window(self, func):
@@ -66,31 +66,33 @@ class Watchdog:
         process_name = self.process_name
         try:
             processes = c.Win32_Process(name=process_name)
-            current_pids = {p.ProcessId for p in processes}
+            if not processes:
+                # The application is not running at all. Reset our state.
+                if self._no_window_checks_count > 0:
+                    logger.debug(f"'{process_name}' is no longer running. Resetting zombie check.")
+                    self._no_window_checks_count = 0
+                return
 
-            # Check all running instances of the target process
-            for pid in current_pids:
-                if pid not in pids_with_windows:
-                    # It's running but has no window, it's a candidate.
-                    self._zombie_candidates[pid] = self._zombie_candidates.get(pid, 0) + 1
-                    logger.debug(f"Process '{process_name}' (PID: {pid}) is a zombie candidate. Count: {self._zombie_candidates[pid]}")
-                    if self._zombie_candidates[pid] >= self.GRACE_PERIOD:
-                        logger.info(f"ZOMBIE CONFIRMED for '{process_name}' (PID: {pid}). Firing callback.")
-                        if 'has_no_window' in self._callbacks:
-                            self._callbacks['has_no_window']()
-                            self._zombie_candidates = {} # Reset after firing
-                            return # Exit to fire only once per tick
-                else:
-                    # It has a window, so it's not a zombie. Reset its candidacy.
-                    if pid in self._zombie_candidates:
-                        logger.debug(f"Process '{process_name}' (PID: {pid}) has a window. Vindicating.")
-                        del self._zombie_candidates[pid]
+            current_pids = {p.ProcessId for p in processes}
             
-            # Clean up candidates that are no longer running
-            stale_candidates = set(self._zombie_candidates.keys()) - current_pids
-            for pid in stale_candidates:
-                del self._zombie_candidates[pid]
-                            
+            # The logic is: the APP is a zombie if NONE of its processes have a window.
+            app_has_a_window = any(pid in pids_with_windows for pid in current_pids)
+
+            if app_has_a_window:
+                # If any process has a window, the whole app is considered active. Reset the count.
+                if self._no_window_checks_count > 0:
+                    logger.debug(f"'{process_name}' has a visible window. Vindicating.")
+                    self._no_window_checks_count = 0
+            else:
+                # None of the processes have a window. Increment the zombie countdown.
+                self._no_window_checks_count += 1
+                logger.debug(f"'{process_name}' has no visible windows. Zombie check count: {self._no_window_checks_count}/{self.GRACE_PERIOD}")
+                if self._no_window_checks_count >= self.GRACE_PERIOD:
+                    logger.info(f"ZOMBIE CONFIRMED for app '{process_name}'. All processes lack windows. Firing callback.")
+                    if 'has_no_window' in self._callbacks:
+                        self._callbacks['has_no_window']()
+                        self._no_window_checks_count = 0 # Reset after firing
+                        
         except wmi.x_wmi as e:
             logger.error(f"WMI query for '{process_name}' failed: {e}")
 
