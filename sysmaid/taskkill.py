@@ -98,7 +98,7 @@ class Watchdog:
 
 _event_manager = _EventManager()
 
-def Setup(process_name):
+def attend(process_name):
     dog = Watchdog(process_name)
     _event_manager.add_watchdog(dog)
     return dog

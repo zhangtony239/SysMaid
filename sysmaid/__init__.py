@@ -1,6 +1,6 @@
 import ctypes
 import logging
-from .taskkill import Setup, kill, start
+from .taskkill import attend, kill, start
 
 def _is_admin():
     try:
@@ -21,7 +21,7 @@ logging.basicConfig(
 )
 
 __all__ = [
-    "Setup",
+    "attend",
     "kill",
     "start",
 ]
