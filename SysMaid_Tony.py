@@ -7,6 +7,11 @@ if __name__ == "__main__":
     def _():
         maid.kill_process('Canva.exe')
 
+    WeMeetApp = maid.attend('WeMeetApp.exe')
+    @WeMeetApp.has_no_window
+    def _():
+        maid.kill_process('WeMeetApp.exe')
+
     CrossDeviceResume = maid.attend('CrossDeviceResume.exe')
     @CrossDeviceResume.is_running
     def _():
