@@ -4,7 +4,7 @@ import pythoncom
 
 logger = logging.getLogger(__name__)
 
-def kill(watchdog_instance):
+def kill_process(watchdog_instance):
     process_name = watchdog_instance.process_name
     logger.info(f"Executing kill for '{process_name}'.")
     try:

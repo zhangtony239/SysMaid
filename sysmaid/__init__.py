@@ -3,7 +3,7 @@ import logging
 from .maid import _event_manager
 from .i18n import get_text
 from .condiction.no_window import attend
-from .action.kill_proc import kill
+from .action.kill_proc import kill_process
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +40,7 @@ if not _is_admin():
 
 __all__ = [
     "attend",
-    "kill",
+    "kill_process",
     "start",
     "set_log_level",
 ]
