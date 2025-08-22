@@ -67,7 +67,7 @@ class ProcessWatcher:
     @property
     def has_no_window(self):
         if 'no_window' not in self._watchdogs:
-            from .condiction.no_window import NoWindowWatchdog
+            from condiction.no_window import NoWindowWatchdog
             dog = NoWindowWatchdog(self._process_name)
             _EventManager.add_watchdog(dog)
             self._watchdogs['no_window'] = dog
@@ -76,7 +76,7 @@ class ProcessWatcher:
     @property
     def is_exited(self):
         if 'is_exited' not in self._watchdogs:
-            from .condiction.is_exited import ExitedWatchdog
+            from condiction.is_exited import ExitedWatchdog
             dog = ExitedWatchdog(self._process_name)
             _EventManager.add_watchdog(dog)
             self._watchdogs['is_exited'] = dog
@@ -85,7 +85,7 @@ class ProcessWatcher:
     @property
     def is_running(self):
         if 'is_running' not in self._watchdogs:
-            from .condiction.is_running import RunningWatchdog
+            from condiction.is_running import RunningWatchdog
             dog = RunningWatchdog(self._process_name)
             _EventManager.add_watchdog(dog)
             self._watchdogs['is_running'] = dog
