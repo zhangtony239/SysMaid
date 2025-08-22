@@ -27,6 +27,6 @@ test = [
     "pytest",
 ]
 [tool.setuptools]
-packages = ["SysMaid", "SysMaid.action", "SysMaid.condiction", "SysMaid.i18n"]
+packages = ["", "action", "condiction", "i18n"]
 package-dir = {"" = "src"}
-package-data = {"SysMaid.i18n" = ["*.json"]}
+package-data = {"i18n" = ["*.json"]}
