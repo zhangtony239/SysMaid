@@ -1,12 +1,10 @@
 import os
 import sys
-# Add the project root to the Python path to allow imports from 'src'.
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add the project's 'src' directory to the Python path to allow imports from it.
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
 import unittest
 from unittest.mock import patch, MagicMock, call
-import time
-import threading
 
 # We need to mock 'sysmaid' and its dependencies BEFORE they are imported by the code under test.
 # So, we create fake modules in sys.modules.
@@ -17,7 +15,9 @@ sys.modules['win32process'] = MagicMock()
 sys.modules['pythoncom'] = MagicMock()
 
 # Now we can safely import the package to be tested
-import src as maid
+import sysmaid as maid
+# We also need to import the 'maid' module specifically to access its internal '_watchdogs' list for testing.
+from sysmaid import maid as maid_module
 
 # We will patch the action functions directly on the imported package
 maid.kill_process = MagicMock()
@@ -36,7 +36,7 @@ class StressTest(unittest.TestCase):
         maid.stop_service.reset_mock()
         
         # VERY IMPORTANT: Clear the global watchdog list in the maid module
-        maid.maid._watchdogs.clear()
+        maid_module._watchdogs.clear()
 
         # Shared state for mocks to read from. This simulates the OS state.
         self.mock_os_state = {
@@ -52,11 +52,11 @@ class StressTest(unittest.TestCase):
         This method is called after each test.
         It stops all watchdog threads to prevent them from running into the next test.
         """
-        for dog in maid.maid._watchdogs:
+        for dog in maid_module._watchdogs:
             dog._is_running = False
             if dog._thread and dog._thread.is_alive():
                 dog._thread.join(timeout=2) # Give threads a moment to die
-        maid.maid._watchdogs.clear() # Final cleanup
+        maid_module._watchdogs.clear() # Final cleanup
 
     def mock_wmi_constructor(self):
         """Mocks `wmi.WMI()`"""
@@ -90,7 +90,7 @@ class StressTest(unittest.TestCase):
         sys.modules['pythoncom'].CoUninitialize.return_value = None
 
 
-    @patch('src.maid.Watchdog.start')
+    @patch('sysmaid.maid.Watchdog.start')
     def test_1000_rules_triggered_simultaneously(self, mock_watchdog_start):
         """
         Stress test: 1000 has_no_window rules are defined.
@@ -120,7 +120,7 @@ class StressTest(unittest.TestCase):
         
         # 4. Initial state check: verify no actions are triggered
         pids_with_windows = set(self.mock_os_state['windows'].values())
-        for dog in maid.maid._watchdogs:
+        for dog in maid_module._watchdogs:
             dog.check_state(c, pids_with_windows)
         maid.kill_process.assert_not_called()
 
@@ -133,7 +133,7 @@ class StressTest(unittest.TestCase):
         print("--- Manually simulating 3 watchdog checks... ---")
         for i in range(3):
             print(f"Check {i+1}...")
-            for dog in maid.maid._watchdogs:
+            for dog in maid_module._watchdogs:
                 dog.check_state(c, pids_with_windows)
 
         # 7. Assert that all 1000 actions have been called
