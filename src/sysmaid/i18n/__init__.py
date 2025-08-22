@@ -1,3 +1,5 @@
+# nuitka-project: --include-package=sysmaid.i18n
+
 import importlib
 import locale
 from typing import Dict
