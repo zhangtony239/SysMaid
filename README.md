@@ -65,6 +65,12 @@ python my_rules.py
 
 为了实现真正的“后台待命”和开机自启，推荐使用 **Nuitka** 将您的规则脚本打包成一个独立的 `.exe` 可执行文件。Nuitka 会将 Python 脚本编译成 C 代码，生成一个高效、无依赖的程序。
 
+**安装 Nuitka：**
+
+```bash
+pip install nuitka
+```
+
 **打包指令：**
 
 ```bash

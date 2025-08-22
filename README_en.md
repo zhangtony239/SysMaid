@@ -65,6 +65,12 @@ python my_rules.py
 
 To achieve a true "background standby" and auto-start on boot, it is recommended to use **Nuitka** to package your rule script into a standalone `.exe` executable. Nuitka compiles the Python script into C code, generating an efficient, dependency-free program.
 
+**Install Nuitka:**
+
+```bash
+pip install nuitka
+```
+
 **Packaging Command:**
 
 ```bash
