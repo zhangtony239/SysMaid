@@ -28,5 +28,5 @@ test = [
 ]
 [tool.setuptools]
 packages = ["", "action", "condiction", "i18n"]
-package-dir = {"" = "src"}
+package-dir = {"SysMaid" = "src"}
 package-data = {"i18n" = ["*.json"]}
