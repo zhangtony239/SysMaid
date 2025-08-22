@@ -102,10 +102,22 @@ def attend(process_name):
 
 def start():
     """
-    启动所有已配置的 watchdog 的监控线程。
+    启动所有已配置的 watchdog 的监控线程，并保持主线程存活直到所有监控结束。
     """
     logger.info("SysMaid service starting all watchdogs...")
     with _global_lock:
-        for dog in _watchdogs:
+        dogs_to_watch = list(_watchdogs)
+        if not dogs_to_watch:
+            logger.warning("No watchdogs configured, SysMaid will exit.")
+            return
+        
+        for dog in dogs_to_watch:
             dog.start()
     logger.info("All watchdogs have been started.")
+
+    # 只要还有任何一个 watchdog 线程在运行，主线程就保持存活。
+    # 这是一个容错机制，防止所有监控线程意外崩溃后主进程僵死。
+    while any(dog._thread and dog._thread.is_alive() for dog in dogs_to_watch):
+        time.sleep(10)
+
+    logger.warning("All watchdog threads have stopped. SysMaid service is shutting down.")
