@@ -11,7 +11,7 @@ authors = [
 description = "为 Windows 高级用户和开发者打造：一个基于Python的进程管理框架，用于驯服那些不守规矩的后台应用和服务。"
 readme = "README.md"
 requires-python = ">=3.8"
-license = { text = "GNU General Public License v3 (GPLv3)" }
+license = { text = "GPL-3.0-only" }
 classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: Microsoft :: Windows",
@@ -25,3 +25,6 @@ dependencies = [
 test = [
     "pytest",
 ]
+
+[tool.setuptools.packages.find]
+where = ["src"]
