@@ -16,10 +16,6 @@ Due to SysMaid's behavior involving system-level process monitoring and operatio
 *   **Extensibility**: Easily add new conditions and actions to adapt to more complex needs.
 
 
-## One-Click Start
-
-We welcome everyone to submit pull requests to build the Tony.py rules version together, making it a comprehensive set of interception rules. This way, you can download the Nuitka-compiled exe from this repository's release to get a cleaner system environment directly.
-
 ## Getting Started
 
 ### Installation
