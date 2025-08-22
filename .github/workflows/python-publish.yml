@@ -26,11 +26,15 @@ jobs:
         with:
           python-version: "3.x"
 
+      - name: Clear pip cache
+        run: |
+          pip cache purge
+
       - name: Build release distributions
         run: |
           # NOTE: put your own distribution build steps here.
-          python -m pip install build
-          python -m build
+          python -m pip install build --no-cache-dir
+          python -m build --no-sdist
 
       - name: Upload distributions
         uses: actions/upload-artifact@v4
