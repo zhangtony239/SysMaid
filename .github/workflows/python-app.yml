@@ -24,12 +24,12 @@ jobs:
       with:
         python-version: "3.10"
     - name: Install dependencies
-      # The default shell on Windows runners is PowerShell.
-      # The `if` statement syntax is changed to be compatible with PowerShell.
       run: |
         python -m pip install --upgrade pip
+        # 安装构建和测试所需的工具
         pip install flake8 pytest
-        if (Test-Path requirements.txt) { pip install -r requirements.txt }
+        # 使用pip来安装pyproject.toml中声明的依赖
+        pip install .
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
