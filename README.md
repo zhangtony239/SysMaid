@@ -92,7 +92,7 @@ SysMaid 的目标不止于简单的进程管理。我们希望将其发展成为
 
 欢迎任何形式的贡献！如果你有好的想法或发现了 Bug，请随时提交 Issue 或 Pull Request。想要抓取日志，可以使用python状态直接运行，确保日志记录级别在 `INFO` 以上。
 
-<a href="https://github.com/RooCodeInc/Roo-Code">
+<a href="https://roocode.com/">
 <img height="32" src="https://github.com/user-attachments/assets/b963732e-8cb2-42c0-a398-d80768a7f86f"></img>
 </a>
 
