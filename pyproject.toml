@@ -26,5 +26,7 @@ dependencies = [
 test = [
     "pytest",
 ]
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools]
+packages = ["SysMaid", "SysMaid.action", "SysMaid.condiction", "SysMaid.i18n"]
+package-dir = {"" = "src"}
+package-data = {"SysMaid.i18n" = ["*.json"]}
