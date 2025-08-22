@@ -74,11 +74,10 @@ pip install nuitka
 **打包指令：**
 
 ```bash
-nuitka --standalone --include-data-dir=sysmaid/i18n=sysmaid/i18n --windows-uac-admin --windows-console-mode=disable your_rules.py
+nuitka --standalone --windows-uac-admin --windows-console-mode=disable your_rules.py
 ```
 
 *   `--standalone`: 创建一个包含所有依赖的独立文件夹。
-*   `--include-data-dir`: 将国际化语言文件打包进去。
 *   `--windows-uac-admin`: 请求管理员权限，这是停止服务等操作所必需的。
 *   `--windows-console-mode=disable`: 创建一个无窗口的后台应用，运行时不会弹出黑色的控制台窗口。
 *   `your_rules.py`: 你的规则脚本文件名。

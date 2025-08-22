@@ -74,11 +74,10 @@ pip install nuitka
 **Packaging Command:**
 
 ```bash
-nuitka --standalone --include-data-dir=sysmaid/i18n=sysmaid/i18n --windows-uac-admin --windows-console-mode=disable your_rules.py
+nuitka --standalone --windows-uac-admin --windows-console-mode=disable your_rules.py
 ```
 
 *   `--standalone`: Creates a standalone folder with all dependencies.
-*   `--include-data-dir`: Packages the internationalization language files.
 *   `--windows-uac-admin`: Requests administrator privileges, necessary for operations like stopping services.
 *   `--windows-console-mode=disable`: Creates a windowless background application that won't show a black console window when run.
 *   `your_rules.py`: Your rule script filename.
