@@ -4,17 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "SysMaid"
-version = "0.2.0"
+version = "0.3.0"
 authors = [
   { name="Tony", email="zhangtony239@gmail.com" },
 ]
 description = "为 Windows 高级用户和开发者打造：一个基于Python的进程管理框架，用于驯服那些不守规矩的后台应用和服务。"
 requires-python = ">=3.8"
-classifiers = [
-    "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-    "Operating System :: Microsoft :: Windows",
-]
+ license = { file = "LICENSE" }
+ classifiers = [
+     "Programming Language :: Python :: 3",
+     "Operating System :: Microsoft :: Windows",
+ ]
 dependencies = [
     "WMI",
     "pywin32",
