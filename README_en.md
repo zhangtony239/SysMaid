@@ -21,7 +21,7 @@ Due to SysMaid's behavior involving system-level process monitoring and operatio
 ### Installation
 
 ```bash
-pip install -r requirements.txt
+pip install sysmain
 ```
 
 ### Usage
