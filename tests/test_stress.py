@@ -50,12 +50,12 @@ class StressTest(unittest.TestCase):
     def tearDown(self):
         """
         This method is called after each test.
-        It stops all watchdog threads to prevent them from running into the next test.
+        It stops all watchdog processes to prevent them from running into the next test.
         """
         for dog in maid_module._watchdogs:
             dog._is_running = False
-            if dog._thread and dog._thread.is_alive():
-                dog._thread.join(timeout=2) # Give threads a moment to die
+            if dog._process and dog._process.is_alive():
+                dog._process.join(timeout=2) # Give processes a moment to die
         maid_module._watchdogs.clear() # Final cleanup
 
     def mock_wmi_constructor(self):
