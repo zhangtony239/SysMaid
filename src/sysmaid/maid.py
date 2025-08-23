@@ -1,5 +1,5 @@
 import logging
-import threading
+import multiprocessing
 import pythoncom
 import wmi
 import time
@@ -10,29 +10,25 @@ logger = logging.getLogger(__name__)
 
 # 全局的 watchdog 列表和锁，用于统一管理
 _watchdogs = []
-_global_lock = threading.Lock()
+_global_lock = multiprocessing.Lock()
 
 class Watchdog:
     """
     每个 Watchdog 实例都是一个独立的监控单元，
-    拥有自己的后台线程来轮询检查进程状态。
+    拥有自己的后台进程来轮询检查进程状态。
     """
     def __init__(self, process_name):
         self.process_name = process_name
         self._callbacks = {}
-        self._thread = None
-        self._is_running = False
-
-        # 将自身注册到全局列表
-        with _global_lock:
-            _watchdogs.append(self)
+        self._process = None
+        self._is_running = False # 状态只在自己的进程内维护
 
     def _loop(self):
         """每个 watchdog 自己的轮询循环。"""
         try:
             pythoncom.CoInitialize()
             c = wmi.WMI()
-            logger.info(f"Watchdog for '{self.process_name}' started polling in thread {threading.get_ident()}.")
+            logger.info(f"Watchdog for '{self.process_name}' started polling in process {multiprocessing.current_process().pid}.")
             
             while self._is_running:
                 pids_with_windows = set()
@@ -41,24 +37,24 @@ class Watchdog:
                         _, found_pid = win32process.GetWindowThreadProcessId(hwnd)
                         pids_with_windows.add(found_pid)
                 
-                # 每个线程独立获取窗口信息
+                # 每个进程独立获取窗口信息
                 win32gui.EnumWindows(enum_windows_callback, None)
                 
                 self.check_state(c, pids_with_windows)
                 time.sleep(1) # 轮询间隔
         except Exception as e:
-            logger.critical(f"Watchdog thread for '{self.process_name}' has crashed: {e}", exc_info=True)
+            logger.critical(f"Watchdog process for '{self.process_name}' has crashed: {e}", exc_info=True)
         finally:
-            logger.info(f"Watchdog thread for '{self.process_name}' is shutting down.")
+            logger.info(f"Watchdog process for '{self.process_name}' is shutting down.")
             pythoncom.CoUninitialize()
 
     def start(self):
-        """启动该 watchdog 的后台监控线程。"""
+        """启动该 watchdog 的后台监控进程。"""
         if not self._is_running:
             self._is_running = True
-            self._thread = threading.Thread(target=self._loop)
-            self._thread.daemon = True # 设置为守护线程，主程序退出时自动结束
-            self._thread.start()
+            self._process = multiprocessing.Process(target=self._loop)
+            self._process.daemon = True # 主进程退出时，子进程也退出
+            self._process.start()
 
     def check_state(self, c, pids_with_windows):
         # 此方法由子类实现具体的检查逻辑
@@ -74,6 +70,8 @@ class ProcessWatcher:
             # 创建 watchdog，它会自动注册到全局列表
             dog = factory(self._process_name)
             self._watchdogs[key] = dog
+            with _global_lock:
+                _watchdogs.append(dog)
         return self._watchdogs[key]
 
     @property
@@ -102,7 +100,7 @@ def attend(process_name):
 
 def start():
     """
-    启动所有已配置的 watchdog 的监控线程，并保持主线程存活直到所有监控结束。
+    启动所有已配置的 watchdog 的监控进程，并保持主线程存活直到所有监控结束。
     """
     logger.info("SysMaid service starting all watchdogs...")
     with _global_lock:
@@ -115,9 +113,8 @@ def start():
             dog.start()
     logger.info("All watchdogs have been started.")
 
-    # 只要还有任何一个 watchdog 线程在运行，主线程就保持存活。
-    # 这是一个容错机制，防止所有监控线程意外崩溃后主进程僵死。
-    while any(dog._thread and dog._thread.is_alive() for dog in dogs_to_watch):
-        time.sleep(10)
+    # 阻塞主进程，直到所有 watchdog 进程结束（在我们的例子中是永久）
+    for dog in dogs_to_watch:
+        dog._process.join()
+    logger.warning("All watchdog processes have stopped. SysMaid service is shutting down.")
 
-    logger.warning("All watchdog threads have stopped. SysMaid service is shutting down.")
