@@ -1,32 +1,47 @@
 import logging
-import wmi
-import pythoncom
+import subprocess
 
 logger = logging.getLogger(__name__)
 
 def kill_process(process_name):
-    logger.info(f"Executing kill for '{process_name}'.")
+    """
+    Forcefully terminates a process and its entire process tree using taskkill.
+    This requires administrator privileges to kill elevated/protected processes.
+    """
+    logger.info(f"Executing force kill for '{process_name}' using taskkill.")
     try:
-        pythoncom.CoInitialize()
-        c = wmi.WMI()
-        killed_count = 0
-        processes_to_kill = c.Win32_Process(name=process_name)
+        command = [
+            "taskkill",
+            "/F",       # Forcefully terminate
+            "/T",       # Terminate process tree
+            "/IM",      # Specify image name
+            process_name
+        ]
         
-        if not processes_to_kill:
+        # We use CREATE_NO_WINDOW to prevent the console from flashing.
+        # capture_output=True pipes stdout/stderr, preventing them from showing up.
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=False, # We will check the result manually
+            creationflags=subprocess.CREATE_NO_WINDOW
+        )
+        
+        # taskkill exit codes:
+        # 0: Success, the process was terminated.
+        # 128: The process was not found.
+        # 1: Access denied (permission issue).
+        if result.returncode == 0:
+            logger.info(f"Successfully sent termination signal to '{process_name}'. Output: {result.stdout.strip()}")
+        elif result.returncode == 128:
             logger.info(f"Kill command ran, but no active '{process_name}' processes were found.")
-            return
+        elif result.returncode == 1:
+            logger.error(f"Failed to kill '{process_name}': Access Denied. Ensure SysMaid is run with administrator privileges. Details: {result.stderr.strip()}")
+        else:
+            logger.error(f"taskkill failed for '{process_name}' with exit code {result.returncode}. Stderr: {result.stderr.strip()}")
 
-        for process in processes_to_kill:
-            try:
-                process.Terminate()
-                killed_count += 1
-                logger.info(f"Sent Terminate signal to '{process_name}' (PID: {process.ProcessId}).")
-            except wmi.x_wmi as e:
-                logger.warning(f"Could not terminate '{process_name}' (PID: {process.ProcessId}). It may have already exited. Details: {e}")
-        
-        logger.info(f"Kill command finished. Terminated {killed_count} instance(s) of '{process_name}'.")
-        
+    except FileNotFoundError:
+        logger.critical("`taskkill.exe` not found. This action is only supported on Windows.")
     except Exception as e:
-        logger.error(f"A critical error occurred during WMI kill for '{process_name}': {e}", exc_info=True)
-    finally:
-        pythoncom.CoUninitialize()
+        logger.error(f"A critical error occurred during taskkill for '{process_name}': {e}", exc_info=True)
