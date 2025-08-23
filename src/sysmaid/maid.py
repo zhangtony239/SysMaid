@@ -52,7 +52,8 @@ class Watchdog:
         """启动该 watchdog 的后台监控进程。"""
         if not self._is_running:
             self._is_running = True
-            self._process = multiprocessing.Process(target=self._loop)
+            proc_name = f"maid({self.process_name})"
+            self._process = multiprocessing.Process(target=self._loop, name=proc_name)
             self._process.daemon = True # 主进程退出时，子进程也退出
             self._process.start()
 
@@ -113,7 +114,7 @@ def start():
             dog.start()
     logger.info("All watchdogs have been started.")
 
-    # 阻塞主进程，直到所有 watchdog 进程结束（在我们的例子中是永久）
+    # 阻塞主进程，直到所有 watchdog 进程结束
     for dog in dogs_to_watch:
         dog._process.join()
     logger.warning("All watchdog processes have stopped. SysMaid service is shutting down.")
