@@ -8,9 +8,8 @@ import win32process
 
 logger = logging.getLogger(__name__)
 
-# 全局的 watchdog 列表和锁，用于统一管理
+# 全局的 watchdog 列表，为统一Start做准备
 _watchdogs = []
-_global_lock = threading.Lock()
 
 class Watchdog:
     """
@@ -24,8 +23,7 @@ class Watchdog:
         self._is_running = False
 
         # 将自身注册到全局列表
-        with _global_lock:
-            _watchdogs.append(self)
+        _watchdogs.append(self)
 
     def _loop(self):
         """每个 watchdog 自己的轮询循环。"""
@@ -105,14 +103,13 @@ def start():
     启动所有已配置的 watchdog 的监控线程，并保持主线程存活直到所有监控结束。
     """
     logger.info("SysMaid service starting all watchdogs...")
-    with _global_lock:
-        dogs_to_watch = list(_watchdogs)
-        if not dogs_to_watch:
-            logger.warning("No watchdogs configured, SysMaid will exit.")
-            return
-        
-        for dog in dogs_to_watch:
-            dog.start()
+    dogs_to_watch = list(_watchdogs)
+    if not dogs_to_watch:
+        logger.warning("No watchdogs configured, SysMaid will exit.")
+        return
+    
+    for dog in dogs_to_watch:
+        dog.start()
     logger.info("All watchdogs have been started.")
 
     # 只要还有任何一个 watchdog 线程在运行，主线程就保持存活。
