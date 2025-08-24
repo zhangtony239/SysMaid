@@ -3,8 +3,9 @@ import logging
 import os
 from .i18n import get_text
 from .maid import attend, start
-from .action.kill_proc import kill_process
+from .action.kill_process import kill_process
 from .action.stop_service import stop_service
+from .action.lock_volume import lock_volume
 
 logger = logging.getLogger(__name__)
 
@@ -43,6 +44,7 @@ __all__ = [
     "attend",
     "kill_process",
     "stop_service",
+    "lock_volume",
     "start",
     "set_log_level",
 ]
