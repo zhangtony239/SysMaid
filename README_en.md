@@ -1,5 +1,5 @@
 # SysMaid
-[简体中文](README.md)
+[简体中文](https://github.com/zhangtony239/SysMaid/blob/main/README.md)
 
 **SysMaid** is a high-level win32 api abstraction layer for Windows, allowing users to manage and optimize system behavior by writing simple Python scripts. It's like the uBlock Origin of process management, aiming to solve the issue of background abuse by "must-use software" and striving to become the most comprehensive AutoRun ecosystem on Windows.
 <br /><br />
@@ -50,10 +50,10 @@ if __name__ == "__main__":
     def _():
         maid.kill_process('CrossDeviceResume.exe')
 
-   # Rule 4: When exiting the Macrium Reflect backup software, automatically lock the backup drive (D:) to protect backup files in a timely manner.
+   # Rule 4: When exiting the Macrium Reflect backup software, automatically lock the backup drive (D:)
    # (Requires D: drive to have BitLocker enabled)
    Reflect = maid.attend('Reflect.exe')
-   @Reflect.has_no_window
+   @Reflect.is_exited
    def _():
        maid.lock_volume('D')
 
@@ -110,4 +110,4 @@ All forms of contribution are welcome! If you have good ideas or find a bug, ple
 
 ## License
 
-This project is open-sourced under the [GPLv3 License](LICENSE).
+This project is open-sourced under the [GPLv3 License](https://github.com/zhangtony239/SysMaid/blob/main/LICENSE).

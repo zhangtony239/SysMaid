@@ -1,5 +1,5 @@
 # SysMaid
-[English](README_en.md)
+[English](https://github.com/zhangtony239/SysMaid/blob/main/README_en.md)
 
 **SysMaid** 是一个为 Windows 设计的高阶 `win32 api` 抽象层，允许用户通过编写简单的 Python 脚本来管理和优化系统行为。它就像一个进程管理界的 uBlock Origin，旨在解决那些“不得不用的软件”所存在的后台滥用问题，并致力于成为 Windows 下最全面的 AutoRun 生态系统。
 <br /><br />
@@ -50,12 +50,12 @@ if __name__ == "__main__":
     def _():
         maid.kill_process('CrossDeviceResume.exe')
 
-   # 规则4：当退出 Macrium Reflect 备份软件时，自动锁定备份盘（D盘），起到及时保护备份文件的作用。
-   # (需确保 D 盘已启用 BitLocker)
-   Reflect = maid.attend('Reflect.exe')
-   @Reflect.has_no_window
-   def _():
-       maid.lock_volume('D')
+    # 规则4：当退出 Macrium Reflect 备份软件时，自动锁定备份盘（D盘）
+    # (需确保 D 盘已启用 BitLocker)
+    Reflect = maid.attend('Reflect.exe')
+    @Reflect.is_exited
+    def _():
+        maid.lock_volume('D')
 
     # 设置日志级别并启动监控
     maid.set_log_level('INFO')
@@ -110,4 +110,4 @@ SysMaid 的目标不止于简单的进程管理。我们希望将其发展成为
 
 ## 许可证
 
-本项目基于 [GPLv3 License](LICENSE) 开源。
+本项目基于 [GPLv3 License](https://github.com/zhangtony239/SysMaid/blob/main/LICENSE) 开源。
