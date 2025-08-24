@@ -12,7 +12,7 @@
 
 *   **简洁的规则定义**：通过 Python 装饰器，直观地定义监控规则。
 *   **进程和服务监控**：轻松监控指定进程的状态，如窗口是否存在、进程是否退出等。
-*   **自动化操作**：在满足条件时自动执行操作，例如结束进程或停止服务。
+*   **自动化操作**：在满足条件时自动执行操作，例如结束进程、停止服务、锁定加密卷等。
 *   **可扩展性**：可以轻松添加新的条件和操作，以适应更复杂的需求。
 
 
@@ -49,6 +49,13 @@ if __name__ == "__main__":
     @CrossDeviceResume.is_running
     def _():
         maid.kill_process('CrossDeviceResume.exe')
+
+   # 规则4：当退出 Macrium Reflect 备份软件时，自动锁定备份盘（D盘），起到及时保护备份文件的作用。
+   # (需确保 D 盘已启用 BitLocker)
+   Reflect = maid.attend('Reflect.exe')
+   @Reflect.has_no_window
+   def _():
+       maid.lock_volume('D')
 
     # 设置日志级别并启动监控
     maid.set_log_level('INFO')

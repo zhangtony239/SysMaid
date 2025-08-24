@@ -12,7 +12,7 @@ Due to SysMaid's behavior involving system-level process monitoring and operatio
 
 *   **Concise Rule Definition**: Intuitively define monitoring rules using Python decorators.
 *   **Process and Service Monitoring**: Easily monitor the status of specified processes, such as whether a window exists or if a process has exited.
-*   **Automated Actions**: Automatically execute actions when conditions are met, such as terminating a process or stopping a service.
+*   **Automated Actions**: Automatically execute actions when conditions are met, such as terminating a process, stopping a service, locking an encrypted volume, etc.
 *   **Extensibility**: Easily add new conditions and actions to adapt to more complex needs.
 
 
@@ -49,6 +49,13 @@ if __name__ == "__main__":
     @CrossDeviceResume.is_running
     def _():
         maid.kill_process('CrossDeviceResume.exe')
+
+   # Rule 4: When exiting the Macrium Reflect backup software, automatically lock the backup drive (D:) to protect backup files in a timely manner.
+   # (Requires D: drive to have BitLocker enabled)
+   Reflect = maid.attend('Reflect.exe')
+   @Reflect.has_no_window
+   def _():
+       maid.lock_volume('D')
 
     # Set log level and start monitoring
     maid.set_log_level('INFO')
