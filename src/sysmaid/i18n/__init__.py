@@ -15,7 +15,11 @@ def _load_language():
     global _translations
     try:
         # e.g., 'zh_CN' or 'en_US'
-        lang_code, _ = locale.getdefaultlocale()
+        try:
+            locale.setlocale(locale.LC_ALL, "")
+        except locale.Error:
+            pass  # Keep default C locale
+        lang_code, _ = locale.getlocale()
         if lang_code:
             lang_code = lang_code.lower()
         else:
