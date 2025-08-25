@@ -143,48 +143,69 @@ class StressTest(unittest.TestCase):
         maid.kill_process.assert_has_calls(expected_calls, any_order=True)
 
         print(f"--- Stress test successful! {maid.kill_process.call_count} actions were triggered. ---")
-    @patch('sysmaid.condiction.is_too_busy.time')
-    @patch('sysmaid.condiction.is_too_busy.psutil.cpu_percent')
-    @patch('sysmaid.maid.BaseWatchdog.start')
-    def test_cpu_is_too_busy_triggers_action(self, mock_start, mock_cpu_percent, mock_time):
+    @patch('sysmaid.maid.HardwareWatchdog.start')
+    def test_cpu_is_too_busy_triggers_action(self, mock_start):
         """
-        Tests that the is_too_busy condition for CPU triggers an action correctly.
+        Tests that the is_too_busy condition for CPU triggers an action correctly,
+        using the new WMI implementation.
         """
         mock_start.return_value = None
         action_mock = MagicMock()
 
-        # 1. Configure mocks
-        # Simulate time moving forward
-        mock_time.time.side_effect = [100, 101, 102, 103, 110, 111]
-        # Simulate CPU usage
-        mock_cpu_percent.side_effect = [95, 96, 98, 50] # High, High, High, then Low
+        # 1. Setup Mock WMI
+        mock_wmi_connection = self.mock_wmi_constructor()
+        
+        # We need a mock processor object for WMI to return
+        mock_processor = MagicMock()
+        
+        # We will control the CPU load by changing this list
+        mock_cpu_loads = [mock_processor]
+        
+        # Point the mock WMI connection to our controllable list
+        mock_wmi_connection.Win32_Processor = lambda: mock_cpu_loads
+        
 
         # 2. Define the rule
+        # Check if CPU is over 90% for 2 consecutive checks
         watcher = maid.attend('cpu')
         watcher.is_too_busy(over=90, duration=2)(action_mock)
 
         # 3. Manually trigger checks
-        dog = maid_module._watchdogs[-1] # Get the watchdog we just created
+        dog = maid_module._watchdogs[-1]
+        dog.c = mock_wmi_connection # Manually inject the mocked WMI connection
 
-        # First check: CPU is busy, timer starts
+        # Check 1: CPU load is high (95%)
+        mock_processor.LoadPercentage = 95
         dog.check_state()
-        action_mock.assert_not_called()
-        self.assertIsNotNone(dog.busy_start_time)
+        action_mock.assert_not_called() # Duration not met yet
+        self.assertFalse(dog._is_busy)
 
-        # Second check: Still busy, but duration not met
+        # Check 2: CPU load is still high (98%), duration is now met
+        mock_processor.LoadPercentage = 98
         dog.check_state()
-        action_mock.assert_not_called()
+        action_mock.assert_called_once() # Action should fire
+        self.assertTrue(dog._is_busy)     # State should be busy
 
-        # Third check: Still busy, duration is met, action fires
-        dog.check_state()
-        action_mock.assert_called_once()
-        self.assertIsNone(dog.busy_start_time) # Timer should reset after firing
-
-        # Fourth check: CPU usage drops, should not fire again
+        # Check 3: CPU load is still high (99%), should not re-trigger immediately
         action_mock.reset_mock()
+        mock_processor.LoadPercentage = 99
         dog.check_state()
+        action_mock.assert_not_called() # Should not fire again yet
+        self.assertTrue(dog._is_busy)
+
+        # Check 4: CPU load drops (50%)
+        mock_processor.LoadPercentage = 50
+        dog.check_state()
+        self.assertFalse(dog._is_busy) # Busy state should reset
         action_mock.assert_not_called()
 
+        # Check 5 & 6: CPU load goes back up, should fire again
+        mock_processor.LoadPercentage = 92
+        dog.check_state() # History: [False, True]
+        mock_processor.LoadPercentage = 93
+        dog.check_state() # History: [True, True] -> Fire!
+        action_mock.assert_called_once()
+        self.assertTrue(dog._is_busy)
 
 
 if __name__ == '__main__':
