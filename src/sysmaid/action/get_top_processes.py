@@ -1,6 +1,6 @@
 import psutil
 import logging
-from sysmaid.i18n import get_text
+from ..i18n import get_text
 
 logger = logging.getLogger(__name__)
 

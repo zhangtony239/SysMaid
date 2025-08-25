@@ -1,7 +1,7 @@
 # nuitka-project: --include-package=sysmaid.i18n
 
 import importlib
-import locale
+import os
 from typing import Dict
 
 _translations: Dict[str, str] = {}
@@ -15,14 +15,8 @@ def _load_language():
     global _translations
     try:
         # e.g., 'zh_CN' or 'en_US'
-        try:
-            locale.setlocale(locale.LC_ALL, "")
-        except locale.Error:
-            pass  # Keep default C locale
-        lang_code, _ = locale.getlocale()
-        if lang_code:
-            lang_code = lang_code.lower()
-        else:
+        lang_code = str(os.getenv('LANG')).split('.')[0].lower()
+        if not lang_code:
             lang_code = 'en_us'
     except (ValueError, TypeError):
         lang_code = 'en_us'  # Default fallback
