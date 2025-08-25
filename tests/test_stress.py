@@ -143,6 +143,48 @@ class StressTest(unittest.TestCase):
         maid.kill_process.assert_has_calls(expected_calls, any_order=True)
 
         print(f"--- Stress test successful! {maid.kill_process.call_count} actions were triggered. ---")
+    @patch('sysmaid.condiction.is_too_busy.time')
+    @patch('sysmaid.condiction.is_too_busy.psutil.cpu_percent')
+    @patch('sysmaid.maid.BaseWatchdog.start')
+    def test_cpu_is_too_busy_triggers_action(self, mock_start, mock_cpu_percent, mock_time):
+        """
+        Tests that the is_too_busy condition for CPU triggers an action correctly.
+        """
+        mock_start.return_value = None
+        action_mock = MagicMock()
+
+        # 1. Configure mocks
+        # Simulate time moving forward
+        mock_time.time.side_effect = [100, 101, 102, 103, 110, 111]
+        # Simulate CPU usage
+        mock_cpu_percent.side_effect = [95, 96, 98, 50] # High, High, High, then Low
+
+        # 2. Define the rule
+        watcher = maid.attend('cpu')
+        watcher.is_too_busy(over=90, duration=2)(action_mock)
+
+        # 3. Manually trigger checks
+        dog = maid_module._watchdogs[-1] # Get the watchdog we just created
+
+        # First check: CPU is busy, timer starts
+        dog.check_state()
+        action_mock.assert_not_called()
+        self.assertIsNotNone(dog.busy_start_time)
+
+        # Second check: Still busy, but duration not met
+        dog.check_state()
+        action_mock.assert_not_called()
+
+        # Third check: Still busy, duration is met, action fires
+        dog.check_state()
+        action_mock.assert_called_once()
+        self.assertIsNone(dog.busy_start_time) # Timer should reset after firing
+
+        # Fourth check: CPU usage drops, should not fire again
+        action_mock.reset_mock()
+        dog.check_state()
+        action_mock.assert_not_called()
+
 
 
 if __name__ == '__main__':
