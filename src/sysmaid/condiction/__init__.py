@@ -1,0 +1,1 @@
+# nuitka-project: --include-package=sysmaid.condicion
