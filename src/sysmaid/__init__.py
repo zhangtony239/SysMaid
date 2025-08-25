@@ -6,6 +6,9 @@ from .maid import attend, start
 from .action.kill_process import kill_process
 from .action.stop_service import stop_service
 from .action.lock_volume import lock_volume
+from .action.alarm import alarm
+from .action.write_file import write_file
+from .action.get_top_processes import get_top_processes
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +48,9 @@ __all__ = [
     "kill_process",
     "stop_service",
     "lock_volume",
+    "alarm",
+    "write_file",
+    "get_top_processes",
     "start",
     "set_log_level",
 ]

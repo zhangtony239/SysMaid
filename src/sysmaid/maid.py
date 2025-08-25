@@ -5,78 +5,102 @@ import wmi
 import time
 import win32gui
 import win32process
+from typing import overload, Literal
+
+@overload
+def attend(name: Literal['cpu', 'ram', 'gpu', 'CPU', 'RAM', 'GPU']) -> 'HardwareWatcher': ...
+@overload
+def attend(name: str) -> 'ProcessWatcher': ...
 
 logger = logging.getLogger(__name__)
 
 # 全局的 watchdog 列表，为统一Start做准备
 _watchdogs = []
 
-class Watchdog:
+HARDWARE_KEYWORDS = ['cpu', 'ram', 'gpu', 'CPU', 'RAM', 'GPU']
+
+class BaseWatchdog:
     """
-    每个 Watchdog 实例都是一个独立的监控单元，
-    拥有自己的后台线程来轮询检查进程状态。
+    所有 Watchdog 的基类，处理通用的线程管理和事件循环。
     """
-    def __init__(self, process_name):
-        self.process_name = process_name
+    def __init__(self, name):
+        self.name = name
         self._callbacks = {}
         self._thread = None
         self._is_running = False
-
-        # 将自身注册到全局列表
         _watchdogs.append(self)
 
     def _loop(self):
         """每个 watchdog 自己的轮询循环。"""
         try:
             pythoncom.CoInitialize()
-            c = wmi.WMI()
-            logger.info(f"Watchdog for '{self.process_name}' started polling in thread {threading.get_ident()}.")
+            self.c = wmi.WMI()
+            logger.info(f"Watchdog for '{self.name}' started polling in thread {threading.get_ident()}.")
             
             while self._is_running:
-                pids_with_windows = set()
-                def enum_windows_callback(hwnd, _):
-                    if win32gui.IsWindowVisible(hwnd) and win32gui.GetWindowText(hwnd):
-                        _, found_pid = win32process.GetWindowThreadProcessId(hwnd)
-                        pids_with_windows.add(found_pid)
-                
-                # 每个线程独立获取窗口信息
-                win32gui.EnumWindows(enum_windows_callback, None)
-                
-                self.check_state(c, pids_with_windows)
+                self.check_state()
                 time.sleep(1) # 轮询间隔
         except Exception as e:
-            logger.critical(f"Watchdog thread for '{self.process_name}' has crashed: {e}", exc_info=True)
+            logger.critical(f"Watchdog thread for '{self.name}' has crashed: {e}", exc_info=True)
         finally:
-            logger.info(f"Watchdog thread for '{self.process_name}' is shutting down.")
+            logger.info(f"Watchdog thread for '{self.name}' is shutting down.")
             pythoncom.CoUninitialize()
 
     def start(self):
-        """启动该 watchdog 的后台监控线程。"""
         if not self._is_running:
             self._is_running = True
             self._thread = threading.Thread(target=self._loop)
-            self._thread.daemon = True # 设置为守护线程，主程序退出时自动结束
+            self._thread.daemon = True
             self._thread.start()
 
-    def check_state(self, c, pids_with_windows):
-        # 此方法由子类实现具体的检查逻辑
+    def check_state(self):
         raise NotImplementedError
+
+class ProcessWatchdog(BaseWatchdog):
+    """专门用于监控进程状态的 Watchdog"""
+    def __init__(self, process_name):
+        super().__init__(name=process_name)
+
+    def check_state(self):
+        """
+        覆盖基类方法，加入进程特有的窗口信息获取，
+        然后调用子类（如NoWindowWatchdog）的最终实现。
+        """
+        pids_with_windows = set()
+        def enum_windows_callback(hwnd, _):
+            if win32gui.IsWindowVisible(hwnd) and win32gui.GetWindowText(hwnd):
+                _, found_pid = win32process.GetWindowThreadProcessId(hwnd)
+                pids_with_windows.add(found_pid)
+        win32gui.EnumWindows(enum_windows_callback, None)
+        
+        # 调用真正的检查逻辑，这个方法将在NoWindowWatchdog等子类中实现
+        self.check_process_state(pids_with_windows)
+
+    def check_process_state(self, pids_with_windows):
+        raise NotImplementedError("This method should be implemented by specific process condition subclasses.")
+
+class HardwareWatchdog(BaseWatchdog):
+    """专门用于监控硬件状态的 Watchdog"""
+    def __init__(self, hardware_name):
+        super().__init__(name=hardware_name)
+
+    def check_state(self):
+        raise NotImplementedError("This method should be implemented by subclasses like IsTooBusyWatchdog.")
 
 class ProcessWatcher:
     def __init__(self, process_name):
         self._process_name = process_name
         self._watchdogs = {}
 
-    def _get_or_create_watchdog(self, key, factory):
+    def _get_or_create_watchdog(self, key, factory, *args, **kwargs):
         if key not in self._watchdogs:
-            # 创建 watchdog，它会自动注册到全局列表
-            dog = factory(self._process_name)
+            dog = factory(self._process_name, *args, **kwargs)
             self._watchdogs[key] = dog
         return self._watchdogs[key]
 
     @property
     def has_no_window(self):
-        from .condiction.no_window import NoWindowWatchdog
+        from .condiction.has_no_window import NoWindowWatchdog
         dog = self._get_or_create_watchdog('no_window', NoWindowWatchdog)
         return dog.has_no_window
     
@@ -91,12 +115,46 @@ class ProcessWatcher:
         from .condiction.is_running import RunningWatchdog
         dog = self._get_or_create_watchdog('is_running', RunningWatchdog)
         return dog.is_running
-        
-def attend(process_name):
+
+class HardwareWatcher:
+    def __init__(self, hardware_name):
+        self._hardware_name = hardware_name
+        self._watchdogs = {}
+
+    def _get_or_create_watchdog(self, key, factory, *args, **kwargs):
+        if key not in self._watchdogs:
+            dog = factory(self._hardware_name, *args, **kwargs)
+            self._watchdogs[key] = dog
+        return self._watchdogs[key]
+
+    def is_too_busy(self, over, duration):
+        from .condiction.is_too_busy import IsTooBusyWatchdog
+        # 产生一个唯一的key，以便相同的参数得到同一个watchdog
+        key = f'is_too_busy_{over}_{duration}'
+        dog = self._get_or_create_watchdog(key, IsTooBusyWatchdog, over=over, duration=duration)
+        return dog.is_too_busy
+
+def attend(name: str):
     """
-    关注一个进程，返回一个 ProcessWatcher 实例用于设置监控条件。
+    关注一个进程或硬件，返回一个 Watcher 实例用于设置监控条件。
     """
-    return ProcessWatcher(process_name)
+    if name in HARDWARE_KEYWORDS:
+        return HardwareWatcher(name.lower())
+    else:
+        return ProcessWatcher(name)
+
+# --- Public Actions ---
+def get_top_processes(count: int) -> str:
+   from .action.get_top_processes import get_top_processes as get_top_processes_func
+   return get_top_processes_func(count)
+
+def alarm(content: str):
+    from .action.alarm import alarm as alarm_func
+    alarm_func(content)
+
+def write_file(path: str, content: str, append: bool = False):
+    from .action.write_file import write_file as write_file_func
+    write_file_func(path, content, append)
 
 def start():
     """
