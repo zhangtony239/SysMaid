@@ -1,7 +1,7 @@
 # SysMaid
 [English](https://github.com/zhangtony239/SysMaid/blob/main/README_en.md)
 
-**SysMaid** 是一个为 Windows 设计的高阶 `win32 api` 抽象层，允许用户通过编写简单的 Python 脚本来管理和优化系统行为。它就像一个进程管理界的 uBlock Origin，旨在解决那些“不得不用的软件”所存在的后台滥用问题，并致力于成为 Windows 下最全面的 AutoRun 生态系统。
+**SysMaid** 是一个为 Windows 设计的高阶 `win32 api` 抽象层，允许用户通过编写简单的 Python 脚本来发现并优化系统后台环境。它就像一个进程管理界的 uBlock Origin，旨在解决那些“不得不用的软件”所存在的后台滥用问题，并致力于成为 Windows 下最全面的 AutoRun 生态系统。
 <br /><br />
 
 #### 下载的文件不见了？
@@ -56,6 +56,14 @@ if __name__ == "__main__":
     @Reflect.is_exited
     def _():
         maid.lock_volume('D')
+
+    # 规则5：当 CPU 连续10秒占用率超过 80% 时，举报占用 CPU 最高的5个进程并记入log
+    Cpu = maid.attend('cpu')
+    @Cpu.is_too_busy(over=80, duration=10)
+    def _():
+        TopProcesses = maid.get_top_processes(5)
+        maid.alarm(TopProcesses)
+        maid.write_file('./logs/TopProcesses.log',TopProcesses)
 
     # 设置日志级别并启动监控
     maid.set_log_level('INFO')
