@@ -121,7 +121,8 @@ class StressTest(unittest.TestCase):
         # 4. Initial state check: verify no actions are triggered
         pids_with_windows = set(self.mock_os_state['windows'].values())
         for dog in maid_module._watchdogs:
-            dog.check_state(c, pids_with_windows)
+            dog.c = c  # Manually set the mocked WMI connection
+            dog.check_process_state(pids_with_windows)
         maid.kill_process.assert_not_called()
 
         # 5. The "simultaneous" event: all windows disappear
@@ -134,7 +135,7 @@ class StressTest(unittest.TestCase):
         for i in range(3):
             print(f"Check {i+1}...")
             for dog in maid_module._watchdogs:
-                dog.check_state(c, pids_with_windows)
+                dog.check_process_state(pids_with_windows)
 
         # 7. Assert that all 1000 actions have been called
         self.assertEqual(maid.kill_process.call_count, num_rules)
