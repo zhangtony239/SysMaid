@@ -16,8 +16,6 @@ class IsTooBusyWatchdog(HardwareWatchdog):
         self.busy_start_time = None
         self._callbacks = []
 
-        # Initial call to cpu_percent to set a baseline. This is fast.
-        psutil.cpu_percent(interval=None)
         # Asynchronously pre-warm all processes' CPU usage stats in the background
         prewarm_thread = threading.Thread(target=self._async_prewarm_processes, daemon=True)
         prewarm_thread.start()
@@ -38,7 +36,7 @@ class IsTooBusyWatchdog(HardwareWatchdog):
     def check_state(self):
         # 目前只实现CPU
         if self.name == 'cpu':
-            usage = psutil.cpu_percent(interval=None)
+            usage = psutil.cpu_percent(interval=1)
             if usage > self.over:
                 if self.busy_start_time is None:
                     self.busy_start_time = time.time()
