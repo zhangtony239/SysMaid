@@ -15,6 +15,15 @@ class IsTooBusyWatchdog(HardwareWatchdog):
         self.busy_start_time = None
         self._callbacks = []
 
+        # Initial call to cpu_percent to set a baseline
+        psutil.cpu_percent(interval=None)
+        # Initialize cpu_percent for all processes
+        for p in psutil.process_iter():
+            try:
+                p.cpu_percent(interval=None)
+            except (psutil.NoSuchProcess, psutil.AccessDenied):
+                pass
+
     def check_state(self):
         # 目前只实现CPU
         if self.name == 'cpu':

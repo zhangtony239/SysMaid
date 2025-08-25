@@ -1,6 +1,5 @@
 import psutil
 import logging
-import time
 
 logger = logging.getLogger(__name__)
 
@@ -15,16 +14,11 @@ def get_top_processes(count: int) -> str:
         str: 格式化的进程信息字符串。
     """
     try:
-        # First call to cpu_percent initializes the system-wide measurement.
-        # This is non-blocking.
-        psutil.cpu_percent(interval=None)
-        time.sleep(0.2)
-
         processes = []
         for p in psutil.process_iter(['pid', 'name']):
             try:
-                # Subsequent calls to cpu_percent with interval=None are non-blocking
-                # and return the CPU usage since the last call.
+                # The pre-warming is now handled by the IsTooBusyWatchdog.
+                # This call retrieves the CPU usage since the watchdog was initialized.
                 p.info['cpu_percent'] = p.cpu_percent(interval=None)
                 processes.append(p)
             except (psutil.NoSuchProcess, psutil.AccessDenied):
