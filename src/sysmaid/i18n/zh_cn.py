@@ -6,6 +6,5 @@ translations = {
   "get_top_processes.result.header": "消耗CPU资源最多的 {count} 个进程：",
   "get_top_processes.result.item": "  - PID: {pid}, 名称: {name}, CPU: {cpu}%",
   "get_top_processes.result.item.error": "  - PID: {pid}, 名称: {name}, CPU: N/A (进程已退出)",
-  "get_top_processes.return.general_error": "错误：无法获取进程信息。{error}",
   "alarm.title": "SysMaid 警报"
 }
