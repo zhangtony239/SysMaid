@@ -90,7 +90,7 @@ class StressTest(unittest.TestCase):
         sys.modules['pythoncom'].CoUninitialize.return_value = None
 
 
-    @patch('sysmaid.maid.Watchdog.start')
+    @patch('sysmaid.maid.BaseWatchdog.start')
     def test_1000_rules_triggered_simultaneously(self, mock_watchdog_start):
         """
         Stress test: 1000 has_no_window rules are defined.
