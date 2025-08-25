@@ -15,20 +15,18 @@ def get_top_processes(count: int) -> str:
     """
     try:
         processes = []
-        for p in psutil.process_iter(['pid', 'name', 'cpu_percent']):
+        for p in psutil.process_iter(['pid', 'name']):
             try:
-                # cpu_percent is initially 0.0, call it once to get a proper value
-                p.cpu_percent(interval=None)
+                p.info['cpu_percent'] = p.cpu_percent(interval=0.1)
                 processes.append(p)
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 continue
-
-        # Allow some time for cpu_percent to be calculated
-        import time
-        time.sleep(0.1)
+        
+        # Exclude System Idle Process
+        processes = [p for p in processes if p.info['name'] != 'System Idle Process']
 
         # Sort processes by CPU usage
-        processes.sort(key=lambda p: p.cpu_percent(interval=None), reverse=True)
+        processes.sort(key=lambda p: p.info['cpu_percent'], reverse=True)
 
         # Format the output string
         top_processes = processes[:count]
@@ -38,7 +36,7 @@ def get_top_processes(count: int) -> str:
                 result.append(
                     f"  - PID: {p.info['pid']}, "
                     f"Name: {p.info['name']}, "
-                    f"CPU: {p.cpu_percent(interval=None):.2f}%"
+                    f"CPU: {p.info['cpu_percent']:.2f}%"
                 )
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 result.append(f"  - PID: {p.info.get('pid', 'N/A')}, Name: {p.info.get('name', 'N/A')}, CPU: N/A (process has exited)")
