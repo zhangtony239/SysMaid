@@ -19,7 +19,6 @@ classifiers = [
 dependencies = [
     "WMI",
     "pywin32",
-    "psutil",
 ]
 
 [project.optional-dependencies]
