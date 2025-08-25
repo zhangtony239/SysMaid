@@ -157,7 +157,8 @@ class StressTest(unittest.TestCase):
         # Simulate time moving forward
         mock_time.time.side_effect = [100, 101, 102, 103, 110, 111]
         # Simulate CPU usage
-        mock_cpu_percent.side_effect = [95, 96, 98, 50] # High, High, High, then Low
+        # The first '0' is consumed by the __init__ of IsTooBusyWatchdog for pre-warming.
+        mock_cpu_percent.side_effect = [0, 95, 96, 98, 50] # Dummy, High, High, High, then Low
 
         # 2. Define the rule
         watcher = maid.attend('cpu')

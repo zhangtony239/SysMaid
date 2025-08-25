@@ -1,6 +1,7 @@
 import time
 import psutil
 import logging
+import threading
 from ..maid import HardwareWatchdog
 
 logger = logging.getLogger(__name__)
@@ -15,14 +16,24 @@ class IsTooBusyWatchdog(HardwareWatchdog):
         self.busy_start_time = None
         self._callbacks = []
 
-        # Initial call to cpu_percent to set a baseline
+        # Initial call to cpu_percent to set a baseline. This is fast.
         psutil.cpu_percent(interval=None)
-        # Initialize cpu_percent for all processes
+        # Asynchronously pre-warm all processes' CPU usage stats in the background
+        prewarm_thread = threading.Thread(target=self._async_prewarm_processes, daemon=True)
+        prewarm_thread.start()
+
+    def _async_prewarm_processes(self):
+        """
+        Iterates through all processes to initialize their cpu_percent calculation.
+        This is intended to run in a background thread to not block startup.
+        """
+        logger.debug("Starting background pre-warming of process CPU stats...")
         for p in psutil.process_iter():
             try:
                 p.cpu_percent(interval=None)
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 pass
+        logger.debug("Background pre-warming of process CPU stats completed.")
 
     def check_state(self):
         # 目前只实现CPU
