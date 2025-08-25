@@ -1,5 +1,6 @@
 import psutil
 import logging
+from sysmaid.i18n import get_text
 
 logger = logging.getLogger(__name__)
 
@@ -32,18 +33,25 @@ def get_top_processes(count: int) -> str:
 
         # Format the output string
         top_processes = processes[:count]
-        result = [f"Top {count} CPU-consuming processes:"]
+        result = [get_text("get_top_processes.result.header").format(count=count)]
         for p in top_processes:
             try:
                 result.append(
-                    f"  - PID: {p.info['pid']}, "
-                    f"Name: {p.info['name']}, "
-                    f"CPU: {p.info['cpu_percent']:.2f}%"
+                    get_text("get_top_processes.result.item").format(
+                        pid=p.info['pid'],
+                        name=p.info['name'],
+                        cpu=f"{p.info['cpu_percent']:.2f}"
+                    )
                 )
             except (psutil.NoSuchProcess, psutil.AccessDenied):
-                result.append(f"  - PID: {p.info.get('pid', 'N/A')}, Name: {p.info.get('name', 'N/A')}, CPU: N/A (process has exited)")
+                result.append(
+                    get_text("get_top_processes.result.item.error").format(
+                        pid=p.info.get('pid', 'N/A'),
+                        name=p.info.get('name', 'N/A')
+                    )
+                )
         return "\n".join(result)
 
     except Exception as e:
         logger.error(f"Failed to get top processes: {e}", exc_info=True)
-        return f"Error: Could not retrieve top processes. {e}"
+        return get_text("get_top_processes.return.general_error").format(error=e)

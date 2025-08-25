@@ -1,6 +1,7 @@
 import ctypes
 import logging
 import threading
+from ..i18n import get_text
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ def _show_messagebox(content: str):
         # text = content to display
         # caption = window title
         # type = 0x40 (MB_ICONINFORMATION)
-        ctypes.windll.user32.MessageBoxW(0, str(content), "SysMaid Alarm", 0x40)
+        ctypes.windll.user32.MessageBoxW(0, str(content), get_text("alarm.title"), 0x40)
     except Exception as e:
         logger.error(f"Failed to show alarm messagebox: {e}", exc_info=True)
 
