@@ -1,5 +1,7 @@
 import os
+import sys
 import logging
+import win32api
 
 logger = logging.getLogger(__name__)
 
@@ -10,10 +12,16 @@ def write_file(path: str, content: str, append: bool = False):
     Args:
         path (str): 目标文件的路径。
         content (str): 要写入的内容。
-        append (bool, optional): 是否追加到文件末尾。默认为 False。
-                                 如果为 False，则会覆盖整个文件。
+        append (bool, optional): 是否追加到文件末尾。默认为 False，会覆盖整个文件。
     """
     try:
+        # Nuitka编译后，需要将相对路径转换为基于可执行文件位置的绝对路径
+        if not os.path.isabs(path) and getattr(sys, 'frozen', False):
+            # 在UAC提权后，sys.argv[0]和sys.executable都可能指向System32
+            # 使用win32api可以更可靠地获取程序自身的路径
+            base_dir = os.path.dirname(win32api.GetModuleFileName(win32api.GetModuleHandle(None)))
+            path = os.path.join(base_dir, path)
+            
         # 确保目录存在
         dir_name = os.path.dirname(path)
         if dir_name:
