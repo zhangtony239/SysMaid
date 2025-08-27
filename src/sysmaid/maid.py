@@ -32,19 +32,14 @@ class BaseWatchdog:
 
     def _loop(self):
         """每个 watchdog 自己的轮询循环。"""
+        logger.info(f"Watchdog for '{self.name}' started polling in thread {threading.get_ident()}.")
         try:
-            pythoncom.CoInitialize()
-            self.c = wmi.WMI()
-            logger.info(f"Watchdog for '{self.name}' started polling in thread {threading.get_ident()}.")
-            
             while self._is_running:
                 self.check_state()
-                time.sleep(1) # 轮询间隔
         except Exception as e:
             logger.critical(f"Watchdog thread for '{self.name}' has crashed: {e}", exc_info=True)
         finally:
             logger.info(f"Watchdog thread for '{self.name}' is shutting down.")
-            pythoncom.CoUninitialize()
 
     def start(self):
         if not self._is_running:
@@ -60,6 +55,24 @@ class ProcessWatchdog(BaseWatchdog):
     """专门用于监控进程状态的 Watchdog"""
     def __init__(self, process_name):
         super().__init__(name=process_name)
+    
+    def _loop(self):
+        """
+        为进程监控定制的循环，包含WMI初始化。
+        """
+        try:
+            pythoncom.CoInitialize()
+            self.c = wmi.WMI()
+            logger.info(f"Process watchdog for '{self.name}' started polling with WMI in thread {threading.get_ident()}.")
+            
+            while self._is_running:
+                self.check_state()
+                time.sleep(1) # 轮询间隔
+        except Exception as e:
+            logger.critical(f"Watchdog thread for '{self.name}' has crashed: {e}", exc_info=True)
+        finally:
+            logger.info(f"Watchdog thread for '{self.name}' is shutting down.")
+            pythoncom.CoUninitialize()
 
     def check_state(self):
         """
