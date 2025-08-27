@@ -60,10 +60,12 @@ if __name__ == "__main__":
     # 规则5：当 CPU 连续10秒占用率超过 80% 时，举报占用 CPU 最高的5个进程并记入log
     Cpu = maid.attend('cpu')
     @Cpu.is_too_busy(over=80, duration=10)
+    # 亦可逐逻辑处理器指定阈值，以解决大小核异构CPU上平均占用计算误差问题
+    # @Cpu.is_too_busy(over=[40,40,40,40,70,70,70,70], duration=5)
     def _():
         TopProcesses = maid.get_top_processes(5)
         maid.alarm(TopProcesses)
-        maid.write_file('./logs/TopProcesses.log',TopProcesses)
+        maid.write_file('logs/TopProcesses.log',TopProcesses)
 
     # 设置日志级别并启动监控
     maid.set_log_level('INFO')

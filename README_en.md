@@ -60,10 +60,12 @@ if __name__ == "__main__":
     # Rule 5: When CPU usage exceeds 80% for 10 consecutive seconds, report the top 5 CPU-consuming processes and log them.
     Cpu = maid.attend('cpu')
     @Cpu.is_too_busy(over=80, duration=10)
+    # You can also specify per-logical-processor thresholds to resolve average utilization calculation errors on heterogeneous CPUs.
+    # @Cpu.is_too_busy(over=[40,40,40,40,70,70,70,70], duration=5)
     def _():
         TopProcesses = maid.get_top_processes(5)
         maid.alarm(TopProcesses)
-        maid.write_file('./logs/TopProcesses.log',TopProcesses)
+        maid.write_file('logs/TopProcesses.log',TopProcesses)
 
     # Set log level and start monitoring
     maid.set_log_level('INFO')
