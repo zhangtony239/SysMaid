@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 # 避免在SYSTEM账户下运行时，工作目录被强制指向System32的问题
-_BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 def write_file(path: str, content: str, append: bool = False):
     """
