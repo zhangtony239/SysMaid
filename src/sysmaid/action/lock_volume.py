@@ -30,38 +30,26 @@ def lock_volume(drive_letter: str, timeout_seconds=30):
             return
 
         volume = volumes[0]
-        
-        # Check protection status
-        protection_status = volume.GetProtectionStatus()[0]
-        if protection_status == 0:
-            logger.warning(f"Cannot lock volume {drive} because BitLocker protection is OFF.")
-            return
-
-        # Check lock status
-        conversion_status = volume.GetConversionStatus()[0]
-        if conversion_status != 1: # 1 means fully encrypted
-             logger.warning(f"Cannot lock volume {drive} because it is not fully encrypted.")
-             return
 
         for attempt in range(timeout_seconds):
             result = volume.Lock()
+            logger.debug(f"Lock command returned: {result}")
             return_value = result[0]
 
             if return_value == 0:
                 logger.info(f"Successfully sent lock command to volume '{drive}'.")
                 return
-            elif return_value == 0x80310000: # FVE_E_LOCKED_VOLUME
+            elif return_value == -0x7fcf0000:
                 logger.info(f"Volume '{drive}' is already locked.")
                 return
-            # E_ACCESS_DENIED: The volume is in use by another application, preventing it from being locked.
-            elif return_value == 0x80070005:
+            elif return_value == -0x7ff8fffb:
                 if attempt < timeout_seconds - 1:
                     logger.info(f"Volume '{drive}' is currently in use, retrying in 1 second...")
                     time.sleep(1)
                 else:
                     logger.error(f"Failed to lock volume '{drive}' after {timeout_seconds} seconds as it remains in use. " \
                                  f"WMI returned error code: {hex(return_value)}")
-            elif return_value == 0x80310001: # FVE_E_NOT_ENCRYPTED
+            elif return_value == -0x7fceffff:
                 logger.warning(f"Cannot lock volume {drive} because it is not protected by BitLocker.")
                 return
             else:
@@ -69,9 +57,6 @@ def lock_volume(drive_letter: str, timeout_seconds=30):
                 return # For other errors, no need to retry.
     
     except Exception as e:
-        if "WBEM_E_ACCESS_DENIED" in str(e):
-            logger.error(f"Failed to lock {drive}. This command requires administrator privileges.")
-        else:
-            logger.critical(f"An unexpected critical error occurred while trying to lock volume {drive}: {e}", exc_info=True)
+        logger.critical(f"An unexpected critical error occurred while trying to lock volume {drive}: {e}", exc_info=True)
     finally:
         pythoncom.CoUninitialize()
