@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sysmaid"
-version = "0.5.10"
+version = "0.5.12"
 authors = [
   { name="Tony Zhang", email="zhangtony239@gmail.com" },
 ]
