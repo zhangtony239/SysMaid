@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 
 logger = logging.getLogger(__name__)
@@ -14,6 +15,11 @@ def write_file(path: str, content: str, append: bool = False):
                                  如果为 False，则会覆盖整个文件。
     """
     try:
+        # 如果是相对路径并且在打包环境中，则转换为基于可执行文件目录的绝对路径
+        if not os.path.isabs(path) and getattr(sys, 'frozen', False):
+            base_dir = os.path.dirname(sys.executable)
+            path = os.path.join(base_dir, path)
+
         # 确保目录存在
         dir_name = os.path.dirname(path)
         if dir_name:
