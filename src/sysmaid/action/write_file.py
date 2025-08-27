@@ -3,6 +3,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# 避免在SYSTEM账户下运行时，工作目录被强制指向System32的问题
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
 def write_file(path: str, content: str, append: bool = False):
     """
     将内容按原样写入指定文件。
@@ -10,10 +13,13 @@ def write_file(path: str, content: str, append: bool = False):
     Args:
         path (str): 目标文件的路径。
         content (str): 要写入的内容。
-        append (bool, optional): 是否追加到文件末尾。默认为 False。
-                                 如果为 False，则会覆盖整个文件。
+        append (bool, optional): 是否追加到文件末尾。默认为 False，会覆盖整个文件。
     """
     try:
+        # 如果路径是相对路径，则转换为基于项目根目录的绝对路径
+        if not os.path.isabs(path):
+            path = os.path.join(_BASE_DIR, path)
+
         # 确保目录存在
         dir_name = os.path.dirname(path)
         if dir_name:
