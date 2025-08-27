@@ -1,12 +1,13 @@
 import logging
 import wmi
 import pythoncom
+import time
 
 logger = logging.getLogger(__name__)
 
-def lock_volume(drive_letter: str):
+def lock_volume(drive_letter: str, timeout_seconds=30):
     """
-    Locks a BitLocker-encrypted volume using WMI.
+    Locks a BitLocker-encrypted volume using WMI, with retries if the volume is in use.
     This action requires administrator privileges to run.
     """
     logger.info(f"Attempting to lock volume {drive_letter}: via WMI.")
@@ -42,19 +43,31 @@ def lock_volume(drive_letter: str):
              logger.warning(f"Cannot lock volume {drive} because it is not fully encrypted.")
              return
 
-        # Lock the volume
-        result = volume.Lock()
-        return_value = result[0]
+        for attempt in range(timeout_seconds):
+            result = volume.Lock()
+            return_value = result[0]
 
-        if return_value == 0:
-            logger.info(f"Successfully sent lock command to volume '{drive}'.")
-        elif return_value == 0x80310031: # FVE_E_LOCKED
-            logger.info(f"Volume '{drive}' is already locked.")
-        elif return_value == 0x80310009: # FVE_E_NOT_ENCRYPTED
-             logger.warning(f"Cannot lock volume {drive} because it is not protected by BitLocker.")
-        else:
-            logger.error(f"Failed to lock volume '{drive}'. WMI returned error code: {hex(return_value)}")
-
+            if return_value == 0:
+                logger.info(f"Successfully sent lock command to volume '{drive}'.")
+                return
+            elif return_value == 0x80310000: # FVE_E_LOCKED_VOLUME
+                logger.info(f"Volume '{drive}' is already locked.")
+                return
+            # E_ACCESS_DENIED: The volume is in use by another application, preventing it from being locked.
+            elif return_value == 0x80070005:
+                if attempt < timeout_seconds - 1:
+                    logger.info(f"Volume '{drive}' is currently in use, retrying in 1 second...")
+                    time.sleep(1)
+                else:
+                    logger.error(f"Failed to lock volume '{drive}' after {timeout_seconds} seconds as it remains in use. " \
+                                 f"WMI returned error code: {hex(return_value)}")
+            elif return_value == 0x80310001: # FVE_E_NOT_ENCRYPTED
+                logger.warning(f"Cannot lock volume {drive} because it is not protected by BitLocker.")
+                return
+            else:
+                logger.error(f"Failed to lock volume '{drive}'. WMI returned error code: {hex(return_value)}")
+                return # For other errors, no need to retry.
+    
     except Exception as e:
         if "WBEM_E_ACCESS_DENIED" in str(e):
             logger.error(f"Failed to lock {drive}. This command requires administrator privileges.")
