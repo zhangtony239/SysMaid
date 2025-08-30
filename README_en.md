@@ -1,4 +1,4 @@
-# SysMaid
+# SysMaid [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fzhangtony239%2FSysMaid.svg?type=shield&issueType=security)](https://app.fossa.com/projects/git%2Bgithub.com%2Fzhangtony239%2FSysMaid?ref=badge_shield&issueType=security)
 [简体中文](https://github.com/zhangtony239/SysMaid/blob/main/README.md)
 
 **SysMaid** is a high-level `win32 api` abstraction layer for Windows, allowing users to discover and optimize the system's background environment by writing simple Python scripts. It acts like a uBlock Origin for process management, designed to address the background resource abuse by "must-use software" and aims to become the most comprehensive AutoRun ecosystem on Windows.
