@@ -6,6 +6,7 @@ import time
 import win32gui
 import win32process
 from typing import overload, Literal
+import pywintypes
 
 @overload
 def attend(name: Literal['cpu', 'ram', 'gpu', 'CPU', 'RAM', 'GPU']) -> 'HardwareWatcher': ...
@@ -91,6 +92,56 @@ class ProcessWatchdog(BaseWatchdog):
 
     def check_process_state(self, pids_with_windows):
         raise NotImplementedError("This method should be implemented by specific process condition subclasses.")
+
+class BaseWmiEvent:
+    def __init__(self, name, event_type):
+        self.name = name
+        self.event_type = event_type
+        self._callbacks = {}
+        self._thread = None
+        self._is_running = False
+        self.query = self._build_query()
+        _watchdogs.append(self)
+
+    def _build_query(self):
+        """构建 WMI 事件查询语句。"""
+        return (f"SELECT * FROM {self.event_type} "
+                f"WITHIN 2 WHERE TargetInstance ISA 'Win32_Process' "
+                f"AND TargetInstance.Name = '{self.name}'")
+
+    def _loop(self):
+        """WMI事件订阅循环。"""
+        logger.info(f"WMI event watcher for '{self.name}' ({self.event_type}) started in thread {threading.get_ident()}.")
+        try:
+            pythoncom.CoInitialize()
+            c = wmi.WMI()
+            watcher = c.ExecNotificationQuery(self.query)
+            while self._is_running:
+                try:
+                    event = watcher.NextEvent(1000)
+                    self.handle_event(event)
+                except pywintypes.com_error as e:
+                    # The HRESULT for WBEM_S_TIMEDOUT is -2147209215. This indicates an expected timeout.
+                    # It's nested deep inside the exception object at e.args[2][5].
+                    if len(e.args) > 2 and e.args[2] and e.args[2][5] == -2147209215:
+                        continue  # This is a timeout, just continue waiting
+                    raise  # Re-raise other unexpected COM errors
+        except Exception as e:
+            logger.critical(f"WMI event watcher for '{self.name}' has crashed: {e}", exc_info=True)
+        finally:
+            logger.info(f"WMI event watcher for '{self.name}' is shutting down.")
+            pythoncom.CoUninitialize()
+
+    def start(self):
+        if not self._is_running:
+            self._is_running = True
+            self._thread = threading.Thread(target=self._loop)
+            self._thread.daemon = True
+            self._thread.start()
+
+    def handle_event(self, event):
+        raise NotImplementedError("This method should be implemented by subclasses.")
+
 
 class HardwareWatchdog(BaseWatchdog):
     """专门用于监控硬件状态的 Watchdog"""
@@ -189,3 +240,4 @@ def start():
         time.sleep(10)
 
     logger.warning("All watchdog threads have stopped. SysMaid service is shutting down.")
+
