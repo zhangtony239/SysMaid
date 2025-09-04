@@ -118,7 +118,7 @@ class BaseWmiEvent:
             watcher = c.ExecNotificationQuery(self.query)
             while self._is_running:
                 try:
-                    event = watcher.NextEvent(1000)
+                    event = watcher.NextEvent(100)
                     self.handle_event(event)
                 except pywintypes.com_error as e:
                     # The HRESULT for WBEM_S_TIMEDOUT is -2147209215. This indicates an expected timeout.
