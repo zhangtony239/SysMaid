@@ -50,13 +50,14 @@ if __name__ == "__main__":
     def _():
         maid.kill_process('CrossDeviceResume.exe')
 
-    # Rule 4: Automatically lock the backup drive (D:) when Macrium Reflect exits
+    # Rule 4: When Macrium Reflect completes a backup, automatically lock the backup drive (D:) and close the backup program
     # (Requires BitLocker to be enabled on drive D:)
-    Reflect = maid.attend('Reflect.exe')
-    @Reflect.is_exited
+    Screen = maid.attend('Screen')
+    @Screen.has_windows_look_like('MacriumSuccess.png')
     def _():
         maid.lock_volume('D')
-        
+        maid.kill_process('Reflect.exe')
+
     # Rule 5: When CPU usage exceeds 80% for 10 consecutive seconds, report the top 5 CPU-consuming processes and log them.
     Cpu = maid.attend('cpu')
     @Cpu.is_too_busy(over=80, duration=10)
