@@ -25,7 +25,7 @@ class WindowsMatchingWatchdog(HardwareWatchdog):
         else:
             path = template_image_path
         
-        self.template = cv2.imread(path, 0)
+        self.template = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
         self.threshold = threshold
         self.interval = interval
         self._callbacks = {}
