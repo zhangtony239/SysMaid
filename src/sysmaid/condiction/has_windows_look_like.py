@@ -4,20 +4,35 @@ import cv2
 import numpy as np
 import time
 import threading
+import os
 from ..maid import HardwareWatchdog
 
 logger = logging.getLogger(__name__)
 
+# 避免在SYSTEM账户下运行时，工作目录被强制指向System32的问题
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+
+
 class WindowsMatchingWatchdog(HardwareWatchdog):
     def __init__(self, hardware_name, template_image_path=None, threshold=0.8, interval=1):
         super().__init__(hardware_name)
-        self.template = cv2.imread(template_image_path, 0)
+
+        if not template_image_path:
+            raise ValueError("A template image path must be provided for WindowsMatchingWatchdog.")
+
+        # 如果路径是相对路径，则转换为基于项目根目录的绝对路径
+        if not os.path.isabs(template_image_path):
+            path = os.path.join(_BASE_DIR, template_image_path)
+        else:
+            path = template_image_path
+        
+        self.template = cv2.imread(path, 0)
         self.threshold = threshold
         self.interval = interval
         self._callbacks = {}
 
         if self.template is None:
-            raise FileNotFoundError(f"Template image not found at path: {template_image_path}")
+            raise FileNotFoundError(f"Template image not found at path: {path}")
 
     def _loop(self):
         """
@@ -35,6 +50,12 @@ class WindowsMatchingWatchdog(HardwareWatchdog):
             logger.info(f"Watchdog thread for '{self.name}' is shutting down.")
             
     def check_state(self):
+        if self.template is None:
+            # This path should not be reached due to the check in __init__,
+            # but we add it for type checker robustness and safety.
+            logger.warning("Template image is not loaded, skipping screen check.")
+            return
+
         with mss.mss() as sct:
             monitor = sct.monitors[1]  # All monitors
             sct_img = sct.grab(monitor)
