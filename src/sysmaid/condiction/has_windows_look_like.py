@@ -10,8 +10,7 @@ from ..maid import HardwareWatchdog
 logger = logging.getLogger(__name__)
 
 # 避免在SYSTEM账户下运行时，工作目录被强制指向System32的问题
-_BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
+_BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 class WindowsMatchingWatchdog(HardwareWatchdog):
     def __init__(self, hardware_name, template_image_path=None, threshold=0.8, interval=1):
