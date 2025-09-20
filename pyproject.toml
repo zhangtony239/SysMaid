@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sysmaid"
-version = "0.6.1"
+version = "0.6.2"
 authors = [
   { name="Tony Zhang", email="zhangtony239@gmail.com" },
 ]
@@ -21,8 +21,7 @@ dependencies = [
     "pywin32",
     "psutil",
     "mss",
-    "opencv-python",
-    "numpy",
+    "opencv-python"
 ]
 
 [project.optional-dependencies]
