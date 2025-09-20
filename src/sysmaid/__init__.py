@@ -2,7 +2,7 @@ import ctypes
 import logging
 import os
 from .i18n import get_text
-from .maid import attend, start
+from .maid import attend, start, restart
 from .action.kill_process import kill_process
 from .action.stop_service import stop_service
 from .action.lock_volume import lock_volume
@@ -52,5 +52,6 @@ __all__ = [
     "write_file",
     "get_top_processes",
     "start",
+    "restart",
     "set_log_level",
 ]

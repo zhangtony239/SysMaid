@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 # 全局的 watchdog 列表，为统一Start做准备
 _watchdogs = []
+_running_watchdogs = {}
 
 HARDWARE_KEYWORDS = ['cpu', 'ram', 'gpu', 'CPU', 'RAM', 'GPU', 'Screen']
 
@@ -26,6 +27,7 @@ class BaseWatchdog:
     """
     def __init__(self, name):
         self.name = name
+        self.unique_key = None
         self._callbacks = {}
         self._thread = None
         self._is_running = False
@@ -48,6 +50,11 @@ class BaseWatchdog:
             self._thread = threading.Thread(target=self._loop)
             self._thread.daemon = True
             self._thread.start()
+
+    def stop(self):
+        if self._is_running:
+            logger.info(f"Stopping watchdog for '{self.name}'...")
+            self._is_running = False
 
     def check_state(self):
         raise NotImplementedError
@@ -97,6 +104,7 @@ class BaseWmiEvent:
     def __init__(self, name, event_type):
         self.name = name
         self.event_type = event_type
+        self.unique_key = None
         self._callbacks = {}
         self._thread = None
         self._is_running = False
@@ -139,6 +147,11 @@ class BaseWmiEvent:
             self._thread.daemon = True
             self._thread.start()
 
+    def stop(self):
+        if self._is_running:
+            logger.info(f"Stopping WMI event watcher for '{self.name}' ({self.event_type})...")
+            self._is_running = False
+
     def handle_event(self, event):
         raise NotImplementedError("This method should be implemented by subclasses.")
 
@@ -159,6 +172,7 @@ class ProcessWatcher:
     def _get_or_create_watchdog(self, key, factory, *args, **kwargs):
         if key not in self._watchdogs:
             dog = factory(self._process_name, *args, **kwargs)
+            dog.unique_key = key
             self._watchdogs[key] = dog
         return self._watchdogs[key]
 
@@ -188,6 +202,7 @@ class HardwareWatcher:
     def _get_or_create_watchdog(self, key, factory, *args, **kwargs):
         if key not in self._watchdogs:
             dog = factory(self._hardware_name, *args, **kwargs)
+            dog.unique_key = key
             self._watchdogs[key] = dog
         return self._watchdogs[key]
 
@@ -226,24 +241,74 @@ def write_file(path: str, content: str, append: bool = False):
     from .action.write_file import write_file as write_file_func
     write_file_func(path, content, append)
 
+def restart():
+    """
+    重启SysMaid的监控服务。
+
+    该函数会检查当前所有已定义的watchdog，并与当前正在运行的watchdog进行比较。
+    - 启动所有新定义但尚未运行的watchdog。
+    - 停止所有已经运行但不再在当前定义中声明的watchdog（僵尸watchdog）。
+    - 对已在运行且仍在定义中的watchdog，不执行任何操作。
+    """
+    global _watchdogs, _running_watchdogs
+    logger.info("SysMaid service restarting, evaluating watchdog changes...")
+
+    # 1. 构建当前定义的watchdog的集合
+    current_dogs = {dog.unique_key: dog for dog in _watchdogs}
+    logger.debug(f"Current definition contains {len(current_dogs)} watchdogs: {list(current_dogs.keys())}")
+    logger.debug(f"There are {len(_running_watchdogs)} watchdogs currently running: {list(_running_watchdogs.keys())}")
+
+    # 2. 识别并停止不再需要的 “僵尸” watchdog
+    zombie_keys = set(_running_watchdogs.keys()) - set(current_dogs.keys())
+    if zombie_keys:
+        logger.info(f"Found {len(zombie_keys)} zombie watchdogs to stop: {zombie_keys}")
+        for key in zombie_keys:
+            dog = _running_watchdogs[key]
+            dog.stop()
+            # 这里可以等待线程真正结束，但为了快速响应，我们先从注册表中移除
+    else:
+        logger.info("No zombie watchdogs found.")
+
+    # 3. 识别并启动新增的 watchdog
+    new_dogs_keys = set(current_dogs.keys()) - set(_running_watchdogs.keys())
+    if new_dogs_keys:
+        logger.info(f"Found {len(new_dogs_keys)} new watchdogs to start: {new_dogs_keys}")
+        for key in new_dogs_keys:
+            dog = current_dogs[key]
+            dog.start()
+    else:
+        logger.info("No new watchdogs to start.")
+
+    # 4. 更新正在运行的 watchdog 注册表
+    # 移除僵尸
+    for key in zombie_keys:
+        del _running_watchdogs[key]
+    # 添加新启动的
+    for key in new_dogs_keys:
+        _running_watchdogs[key] = current_dogs[key]
+    
+    logger.info("SysMaid service restart complete.")
+    logger.info(f"{len(_running_watchdogs)} watchdogs are now running.")
+    _watchdogs.clear()
+
 def start():
     """
-    启动所有已配置的 watchdog 的监控线程，并保持主线程存活直到所有监控结束。
+    首次启动所有已配置的 watchdog 的监控线程，并保持主线程存活。
     """
-    logger.info("SysMaid service starting all watchdogs...")
-    dogs_to_watch = list(_watchdogs)
-    if not dogs_to_watch:
-        logger.warning("No watchdogs configured, SysMaid will exit.")
-        return
-    
-    for dog in dogs_to_watch:
-        dog.start()
-    logger.info("All watchdogs have been started.")
+    logger.info("SysMaid service starting...")
+    restart()
 
-    # 只要还有任何一个 watchdog 线程在运行，主线程就保持存活。
-    # 这是一个容错机制，防止所有监控线程意外崩溃后主进程僵死。
-    while any(dog._thread and dog._thread.is_alive() for dog in dogs_to_watch):
-        time.sleep(10)
-
-    logger.warning("All watchdog threads have stopped. SysMaid service is shutting down.")
+    # 进入主循环，保持进程存活，直到所有监控线程结束
+    try:
+        while True:
+            running_dogs = list(_running_watchdogs.values())
+            if not any(dog._thread and dog._thread.is_alive() for dog in running_dogs):
+                logger.warning("All watchdog threads have stopped. SysMaid will exit.")
+                break
+            time.sleep(10)
+    except KeyboardInterrupt:
+        logger.info("SysMaid service shutting down by user request...")
+        for dog in list(_running_watchdogs.values()):
+            dog.stop()
+        logger.info("All watchdogs have been requested to stop.")
 
