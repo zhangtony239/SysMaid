@@ -5,6 +5,7 @@ import wmi
 import time
 import win32gui
 import win32process
+import os
 from typing import overload, Literal
 import pywintypes
 
@@ -200,7 +201,7 @@ class HardwareWatcher:
 
     def has_windows_look_like(self, template_image_path: str, threshold: float = 0.8, interval: int = 1):
         from .condiction.has_windows_look_like import WindowsMatchingWatchdog
-        key = f'look_like_{template_image_path}_{threshold}_{interval}'
+        key = f'look_like_{os.path.basename(template_image_path)}_{threshold}_{interval}'
         dog = self._get_or_create_watchdog(key, WindowsMatchingWatchdog, template_image_path=template_image_path, threshold=threshold, interval=interval)
         return dog.is_found
         
