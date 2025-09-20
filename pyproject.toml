@@ -20,6 +20,9 @@ dependencies = [
     "WMI",
     "pywin32",
     "psutil",
+    "mss",
+    "opencv-python",
+    "numpy",
 ]
 
 [project.optional-dependencies]
