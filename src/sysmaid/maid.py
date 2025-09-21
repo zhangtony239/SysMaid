@@ -227,20 +227,28 @@ class HardwareWatcher:
         self.name = hardware_name
         self._watchdogs = {}
         self._is_active = True
+        self._start_ref_count = 0
 
     def start(self):
         """激活此看护实例，并恢复其下所有已创建的规则。"""
-        logger.info(f"Attendant for '{self.name}' activated.")
-        self._is_active = True
-        for dog in self._watchdogs.values():
-            dog.resume()
+        self._start_ref_count += 1
+        logger.info(f"Attendant for '{self.name}' start requested. Ref count: {self._start_ref_count}.")
+        if self._start_ref_count == 1:
+            logger.info(f"Attendant for '{self.name}' activated.")
+            self._is_active = True
+            for dog in self._watchdogs.values():
+                dog.resume()
 
     def stop(self):
         """停用此看护实例，并暂停其下所有已创建的规则。"""
-        logger.info(f"Attendant for '{self.name}' deactivated.")
-        self._is_active = False
-        for dog in self._watchdogs.values():
-            dog.pause()
+        if self._start_ref_count > 0:
+            self._start_ref_count -= 1
+        logger.info(f"Attendant for '{self.name}' stop requested. Ref count: {self._start_ref_count}.")
+        if self._start_ref_count == 0:
+            logger.info(f"Attendant for '{self.name}' deactivated.")
+            self._is_active = False
+            for dog in self._watchdogs.values():
+                dog.pause()
 
     def _get_or_create_watchdog(self, key, factory, *args, **kwargs):
         if key not in self._watchdogs:
