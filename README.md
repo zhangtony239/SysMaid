@@ -50,13 +50,22 @@ if __name__ == "__main__":
     def _():
         maid.kill_process('CrossDeviceResume.exe')
 
-    # 规则4：当 Macrium Reflect 完成备份时，自动锁定备份盘（D盘）并关闭备份程序
+    # 规则4：当 Macrium Reflect 完成备份或退出时，自动锁定备份盘（D盘）并关闭备份程序
     # (需确保 D 盘已启用 BitLocker)
     Screen = maid.attend('Screen')
-    @Screen.has_windows_look_like('MacriumSuccess.png')
+    Screen.stop() #截图监听器占用稍大，建议默认关闭
+    @Screen.has_windows_look_like('samples\\MacriumSuccess.png')
+    def _():
+        maid.kill_process('Reflect.exe')
+
+    Macrium = maid.attend('Reflect.exe')
+    @Macrium.is_running
+    def _():
+        Screen.start() # maid.attend实例可被规则启停
+    @Macrium.is_exited
     def _():
         maid.lock_volume('D')
-        maid.kill_process('Reflect.exe')
+        Screen.stop() # 硬件监听的Stop权限小于Start，采用引用计数控制，可放心多规则并行
 
     # 规则5：当 CPU 连续10秒占用率超过 80% 时，举报占用 CPU 最高的5个进程并记入log
     Cpu = maid.attend('cpu')
