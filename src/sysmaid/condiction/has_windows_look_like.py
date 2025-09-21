@@ -2,8 +2,6 @@ import logging
 import mss
 import cv2
 import numpy as np
-import time
-import threading
 import os
 from ..maid import HardwareWatchdog
 
@@ -15,6 +13,7 @@ _BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__fi
 class WindowsMatchingWatchdog(HardwareWatchdog):
     def __init__(self, hardware_name, template_image_path=None, threshold=0.8, interval=1):
         super().__init__(hardware_name)
+        self.interval = interval  # 设置轮询间隔，基类的_loop将会使用它
 
         if not template_image_path:
             raise ValueError("A template image path must be provided for WindowsMatchingWatchdog.")
@@ -27,26 +26,10 @@ class WindowsMatchingWatchdog(HardwareWatchdog):
         
         self.template = cv2.imdecode(np.fromfile(path, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
         self.threshold = threshold
-        self.interval = interval
         self._callbacks = {}
 
         if self.template is None:
             raise FileNotFoundError(f"Template image not found at path: {path}")
-
-    def _loop(self):
-        """
-        Since this specific hardware watchdog requires polling,
-        we override the _loop method to implement it.
-        """
-        logger.info(f"Watchdog for screen matching '{self.name}' started polling every {self.interval}s in thread {threading.get_ident()}.")
-        try:
-            while self._is_running:
-                self.check_state()
-                time.sleep(self.interval)
-        except Exception as e:
-            logger.critical(f"Watchdog thread for '{self.name}' has crashed: {e}", exc_info=True)
-        finally:
-            logger.info(f"Watchdog thread for '{self.name}' is shutting down.")
             
     def check_state(self):
         if self.template is None:

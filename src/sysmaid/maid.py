@@ -26,6 +26,7 @@ class BaseWatchdog:
     """
     def __init__(self, name):
         self.name = name
+        self.interval = 1 # 默认轮询间隔（秒）
         self._callbacks = {}
         self._thread = None
         self._is_running = False
@@ -40,15 +41,21 @@ class BaseWatchdog:
         """恢复工作循环。"""
         self._is_paused = False
 
+    def _check_and_wait(self):
+        """封装了暂停检查、任务执行和等待的原子操作。"""
+        if self._is_paused:
+            time.sleep(1)  # 在暂停时休眠，以降低CPU使用率
+            return
+
+        self.check_state()
+        time.sleep(self.interval)
+
     def _loop(self):
-        """每个 watchdog 自己的轮询循环。"""
+        """每个watchdog自己的轮询循环（模板方法）。"""
         logger.info(f"Watchdog for '{self.name}' started polling in thread {threading.get_ident()}.")
         try:
             while self._is_running:
-                if self._is_paused:
-                    time.sleep(1) # 在暂停时休眠，以降低CPU使用率
-                    continue
-                self.check_state()
+                self._check_and_wait()
         except Exception as e:
             logger.critical(f"Watchdog thread for '{self.name}' has crashed: {e}", exc_info=True)
         finally:
@@ -71,16 +78,16 @@ class ProcessWatchdog(BaseWatchdog):
     
     def _loop(self):
         """
-        为进程监控定制的循环，包含WMI初始化。
+        为进程监控定制的循环，在基类循环的基础上增加了WMI初始化和反初始化。
         """
         try:
             pythoncom.CoInitialize()
             self.c = wmi.WMI()
             logger.info(f"Process watchdog for '{self.name}' started polling with WMI in thread {threading.get_ident()}.")
             
-            while self._is_running:
-                self.check_state()
-                time.sleep(1) # 轮询间隔
+            # 调用基类的循环模板
+            super()._loop()
+
         except Exception as e:
             logger.critical(f"Watchdog thread for '{self.name}' has crashed: {e}", exc_info=True)
         finally:

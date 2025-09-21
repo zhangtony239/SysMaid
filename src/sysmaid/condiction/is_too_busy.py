@@ -1,7 +1,6 @@
 import time
 import psutil
 import logging
-import threading
 from ..maid import HardwareWatchdog
 
 logger = logging.getLogger(__name__)
@@ -25,41 +24,41 @@ class IsTooBusyWatchdog(HardwareWatchdog):
         self.busy_start_time = None
         self._callbacks = []
 
-        # Asynchronously pre-warm all processes' CPU usage stats in the background
-        prewarm_thread = threading.Thread(target=self._async_prewarm_processes, daemon=True)
-        prewarm_thread.start()
+        # Initialize CPU monitoring to get a baseline.
+        self._initialize_cpu_monitoring()
 
-    def _async_prewarm_processes(self):
+    def _initialize_cpu_monitoring(self):
         """
-        Iterates through all processes to initialize their cpu_percent calculation.
-        This is intended to run in a background thread to not block startup.
+        Initializes cpu_percent calculation. The first call is non-blocking
+        and subsequent calls will compare against this first call.
         """
-        logger.debug("Starting background pre-warming of process CPU stats...")
-        for p in psutil.process_iter():
-            try:
-                p.cpu_percent(interval=None)
-            except (psutil.NoSuchProcess, psutil.AccessDenied):
-                pass
-        logger.debug("Background pre-warming of process CPU stats completed.")
-
+        logger.debug("Initializing CPU usage monitoring...")
+        psutil.cpu_percent(interval=None, percpu=self.percpu)
+        logger.debug("CPU usage monitoring initialized.")
+        
     def check_state(self):
         # Currently, only CPU is implemented
         if self.name != 'cpu':
             return
             
         is_currently_busy = False
+        # Get instantaneous CPU usage without blocking
+        usages = psutil.cpu_percent(interval=None, percpu=self.percpu)
+        
         if self.percpu:
-            usages = psutil.cpu_percent(interval=1, percpu=True)
-            for i, (usage, threshold) in enumerate(zip(usages, self.over)):
-                if threshold != -1 and usage > threshold:
-                    is_currently_busy = True
-                    logger.debug(f"CPU core {i} usage {usage}% exceeded threshold {threshold}%.")
-                    break
+            # When percpu is True, usages is a list of floats
+            if isinstance(usages, list):
+                for i, (usage, threshold) in enumerate(zip(usages, self.over)):
+                    if threshold != -1 and usage > threshold:
+                        is_currently_busy = True
+                        logger.debug(f"CPU core {i} usage {usage}% exceeded threshold {threshold}%.")
+                        break
         else:
-            usage = psutil.cpu_percent(interval=1)
-            if usage > self.over:
+            # When percpu is False, usages is a single float
+            usage = usages
+            if isinstance(usage, float) and usage > self.over:
                 is_currently_busy = True
-                logger.debug(f"Overall CPU usage {usage}% exceeded threshold {self.over}%.")
+                logger.debug(f"Overall CPU usage {usage}% exceeded threshold {self.over}.")
 
         if is_currently_busy:
             if self.busy_start_time is None:
