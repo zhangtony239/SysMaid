@@ -29,13 +29,25 @@ class BaseWatchdog:
         self._callbacks = {}
         self._thread = None
         self._is_running = False
+        self._is_paused = False  # 新增：员工的暂停状态
         _watchdogs.append(self)
+
+    def pause(self):
+        """暂停工作循环。"""
+        self._is_paused = True
+
+    def resume(self):
+        """恢复工作循环。"""
+        self._is_paused = False
 
     def _loop(self):
         """每个 watchdog 自己的轮询循环。"""
         logger.info(f"Watchdog for '{self.name}' started polling in thread {threading.get_ident()}.")
         try:
             while self._is_running:
+                if self._is_paused:
+                    time.sleep(1) # 在暂停时休眠，以降低CPU使用率
+                    continue
                 self.check_state()
         except Exception as e:
             logger.critical(f"Watchdog thread for '{self.name}' has crashed: {e}", exc_info=True)
@@ -100,8 +112,17 @@ class BaseWmiEvent:
         self._callbacks = {}
         self._thread = None
         self._is_running = False
+        self._is_paused = False # 新增：员工的暂停状态
         self.query = self._build_query()
         _watchdogs.append(self)
+
+    def pause(self):
+        """暂停工作循环。"""
+        self._is_paused = True
+
+    def resume(self):
+        """恢复工作循环。"""
+        self._is_paused = False
 
     def _build_query(self):
         """构建 WMI 事件查询语句。"""
@@ -117,6 +138,9 @@ class BaseWmiEvent:
             c = wmi.WMI()
             watcher = c.ExecNotificationQuery(self.query)
             while self._is_running:
+                if self._is_paused:
+                    time.sleep(1) # 在暂停时休眠
+                    continue
                 try:
                     event = watcher.NextEvent(100)
                     self.handle_event(event)
@@ -153,12 +177,30 @@ class HardwareWatchdog(BaseWatchdog):
 
 class ProcessWatcher:
     def __init__(self, process_name):
-        self._process_name = process_name
+        self.name = process_name
         self._watchdogs = {}
+        self._is_active = True
+
+    def start(self):
+        """激活此看护实例，并恢复其下所有已创建的规则。"""
+        logger.info(f"Attendant for '{self.name}' activated.")
+        self._is_active = True
+        for dog in self._watchdogs.values():
+            dog.resume()
+
+    def stop(self):
+        """停用此看护实例，并暂停其下所有已创建的规则。"""
+        logger.info(f"Attendant for '{self.name}' deactivated.")
+        self._is_active = False
+        for dog in self._watchdogs.values():
+            dog.pause()
 
     def _get_or_create_watchdog(self, key, factory, *args, **kwargs):
         if key not in self._watchdogs:
-            dog = factory(self._process_name, *args, **kwargs)
+            dog = factory(self.name, *args, **kwargs)
+            # 在创建时，让所有dog继承当前状态
+            if not self._is_active:
+                dog.pause()
             self._watchdogs[key] = dog
         return self._watchdogs[key]
 
@@ -182,12 +224,30 @@ class ProcessWatcher:
 
 class HardwareWatcher:
     def __init__(self, hardware_name):
-        self._hardware_name = hardware_name
+        self.name = hardware_name
         self._watchdogs = {}
+        self._is_active = True
+
+    def start(self):
+        """激活此看护实例，并恢复其下所有已创建的规则。"""
+        logger.info(f"Attendant for '{self.name}' activated.")
+        self._is_active = True
+        for dog in self._watchdogs.values():
+            dog.resume()
+
+    def stop(self):
+        """停用此看护实例，并暂停其下所有已创建的规则。"""
+        logger.info(f"Attendant for '{self.name}' deactivated.")
+        self._is_active = False
+        for dog in self._watchdogs.values():
+            dog.pause()
 
     def _get_or_create_watchdog(self, key, factory, *args, **kwargs):
         if key not in self._watchdogs:
-            dog = factory(self._hardware_name, *args, **kwargs)
+            dog = factory(self.name, *args, **kwargs)
+            # 在创建时，让所有dog继承当前状态
+            if not self._is_active:
+                dog.pause()
             self._watchdogs[key] = dog
         return self._watchdogs[key]
 
@@ -246,4 +306,3 @@ def start():
         time.sleep(10)
 
     logger.warning("All watchdog threads have stopped. SysMaid service is shutting down.")
-
