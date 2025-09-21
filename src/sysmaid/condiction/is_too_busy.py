@@ -24,26 +24,13 @@ class IsTooBusyWatchdog(HardwareWatchdog):
         self.busy_start_time = None
         self._callbacks = []
 
-        # Initialize CPU monitoring to get a baseline.
-        self._initialize_cpu_monitoring()
-
-    def _initialize_cpu_monitoring(self):
-        """
-        Initializes cpu_percent calculation. The first call is non-blocking
-        and subsequent calls will compare against this first call.
-        """
-        logger.debug("Initializing CPU usage monitoring...")
-        psutil.cpu_percent(interval=None, percpu=self.percpu)
-        logger.debug("CPU usage monitoring initialized.")
-        
     def check_state(self):
         # Currently, only CPU is implemented
         if self.name != 'cpu':
             return
             
         is_currently_busy = False
-        # Get instantaneous CPU usage without blocking
-        usages = psutil.cpu_percent(interval=None, percpu=self.percpu)
+        usages = psutil.cpu_percent(interval=self.interval, percpu=self.percpu)
         
         if self.percpu:
             # When percpu is True, usages is a list of floats
@@ -54,9 +41,9 @@ class IsTooBusyWatchdog(HardwareWatchdog):
                         logger.debug(f"CPU core {i} usage {usage}% exceeded threshold {threshold}%.")
                         break
         else:
-            # When percpu is False, usages is a single float
+            # When percpu is False, usages is a single float or int
             usage = usages
-            if isinstance(usage, float) and usage > self.over:
+            if isinstance(usage, (float, int)) and usage > self.over:
                 is_currently_busy = True
                 logger.debug(f"Overall CPU usage {usage}% exceeded threshold {self.over}.")
 
