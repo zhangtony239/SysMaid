@@ -12,11 +12,12 @@ def lock_volume(drive_letter: str, timeout_seconds=30):
     """
     logger.info(f"Attempting to lock volume {drive_letter}: via WMI.")
 
-    if not drive_letter or len(drive_letter) > 1:
+    # Normalize drive letter: accept "D" or "D:"
+    clean_letter = (drive_letter or "").strip().upper().rstrip(':')
+    if len(clean_letter) != 1:
         logger.error(f"Invalid drive letter provided: '{drive_letter}'. It must be a single character (e.g., 'D').")
         return
-
-    drive = f"{drive_letter.upper()}:"
+    drive = f"{clean_letter}:"
 
     try:
         pythoncom.CoInitialize()
@@ -31,7 +32,8 @@ def lock_volume(drive_letter: str, timeout_seconds=30):
 
         volume = volumes[0]
 
-        for attempt in range(timeout_seconds):
+        start_time = time.time()
+        while True:
             result = volume.Lock()
             logger.debug(f"Lock command returned: {result}")
             return_value = result[0]
@@ -43,12 +45,13 @@ def lock_volume(drive_letter: str, timeout_seconds=30):
                 logger.info(f"Volume '{drive}' is already locked.")
                 return
             elif return_value == -0x7ff8fffb:
-                if attempt < timeout_seconds - 1:
+                if time.time() - start_time < timeout_seconds:
                     logger.info(f"Volume '{drive}' is currently in use, retrying in 1 second...")
                     time.sleep(1)
                 else:
                     logger.error(f"Failed to lock volume '{drive}' after {timeout_seconds} seconds as it remains in use. " \
                                  f"WMI returned error code: {hex(return_value)}")
+                    return
             elif return_value == -0x7fceffff:
                 logger.warning(f"Cannot lock volume {drive} because it is not protected by BitLocker.")
                 return
