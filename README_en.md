@@ -109,7 +109,7 @@ nuitka --standalone --windows-uac-admin --windows-console-mode=disable your_rule
 *   `--windows-console-mode=disable`: Creates a windowless background application that won't show a black console window when run.
 *   `your_rules.py`: Your rule script filename.
 
-After successful packaging, you will find the generated `.exe` file in the `your_rules.dist` folder. You can place this file or its shortcut into the system's "Startup" folder to have it launch automatically on boot.
+The output folder after a successful build is named `your_rules.dist` . To enable auto-start on boot, create a shortcut for the `.exe` file inside this folder and move it to the system's "Startup" folder.
 
 ## Future Plans
 

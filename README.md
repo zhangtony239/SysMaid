@@ -109,7 +109,7 @@ nuitka --standalone --windows-uac-admin --windows-console-mode=disable your_rule
 *   `--windows-console-mode=disable`: 创建一个无窗口的后台应用，运行时不会弹出黑色的控制台窗口。
 *   `your_rules.py`: 你的规则脚本文件名。
 
-打包成功后，你会在 `your_rules.dist` 文件夹中找到生成的 `.exe` 文件。你可以将这个文件或其快捷方式放入系统的“启动”文件夹，即可实现开机自启。
+打包成功后的文件夹名为 `your_rules.dist` 。将其中的 `.exe` 创建快捷方式到系统的“启动”文件夹，即可实现开机自启。
 
 ## 未来规划
 

@@ -9,7 +9,7 @@ from typing import overload, Literal
 import pywintypes
 
 @overload
-def attend(name: Literal['cpu', 'ram', 'gpu', 'CPU', 'RAM', 'GPU', 'Screen']) -> 'HardwareWatcher': ...
+def attend(name: Literal['cpu', 'ram', 'gpu', 'CPU', 'RAM', 'GPU', 'Screen']) -> 'HardwareWatcher': ... # type: ignore
 @overload
 def attend(name: str) -> 'ProcessWatcher': ...
 
