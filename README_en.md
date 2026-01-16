@@ -125,7 +125,7 @@ SysMaid's goal extends beyond simple process management. We hope to develop it i
 Contributions of any kind are welcome! If you have good ideas or find a bug, please feel free to submit an Issue or Pull Request. To capture logs, you can run the script directly in a Python environment and ensure the logging level is set to `INFO` or higher.
 
 <a href="https://roocode.com/">
-<img height="32" src="https://github.com/user-attachments/assets/b963732e-8cb2-42c0-a398-d80768a7f86f"></img>
+<img height="32" src="https://roocode.com/RooCode-Badge-blk.svg"></img>
 </a>
 
 ## License
