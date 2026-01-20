@@ -101,12 +101,13 @@ pip install nuitka
 **打包指令：**
 
 ```bash
-nuitka --standalone --windows-uac-admin --windows-console-mode=disable your_rules.py
+nuitka --standalone --windows-uac-admin --windows-console-mode=disable --mingw64 your_rules.py
 ```
 
 *   `--standalone`: 创建一个包含所有依赖的独立文件夹。
 *   `--windows-uac-admin`: 请求管理员权限，这是停止服务等操作所必需的。
 *   `--windows-console-mode=disable`: 创建一个无窗口的后台应用，运行时不会弹出黑色的控制台窗口。
+*   `--mingw64`: 强制使用mingw64编译器，防止nuitka找不到c语言编译器导致报错。
 *   `your_rules.py`: 你的规则脚本文件名。
 
 打包成功后的文件夹名为 `your_rules.dist` 。将其中的 `.exe` 创建快捷方式到系统的“启动”文件夹，即可实现开机自启。
