@@ -101,12 +101,13 @@ pip install nuitka
 **Packaging Command:**
 
 ```bash
-nuitka --standalone --windows-uac-admin --windows-console-mode=disable your_rules.py
+nuitka --standalone --windows-uac-admin --windows-console-mode=disable --mingw64 your_rules.py
 ```
 
 *   `--standalone`: Creates a standalone folder with all dependencies included.
 *   `--windows-uac-admin`: Requests administrator privileges, which are necessary for operations like stopping services.
 *   `--windows-console-mode=disable`: Creates a windowless background application that won't show a black console window when run.
+*   `--mingw64`: Force the use of the MinGW64 compiler to prevent errors caused by Nuitka failing to find a C compiler.
 *   `your_rules.py`: Your rule script filename.
 
 The output folder after a successful build is named `your_rules.dist` . To enable auto-start on boot, create a shortcut for the `.exe` file inside this folder and move it to the system's "Startup" folder.
