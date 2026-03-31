@@ -1,59 +1,59 @@
 # SysMaid [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fzhangtony239%2FSysMaid.svg?type=shield&issueType=security)](https://app.fossa.com/projects/git%2Bgithub.com%2Fzhangtony239%2FSysMaid?ref=badge_shield&issueType=security)
-[English](https://github.com/zhangtony239/SysMaid/blob/main/README_en.md)
+[简体中文](https://github.com/zhangtony239/SysMaid/blob/main/README_zh.md)
 
-**SysMaid** 是一个为 Windows 设计的高阶 `win32 api` 抽象层，允许用户通过编写简单的 Python 脚本来发现并优化系统后台环境。它就像一个进程管理界的 uBlock Origin，旨在解决那些“不得不用的软件”所存在的后台滥用问题，并致力于成为 Windows 下最全面的 AutoRun 生态系统。
+**SysMaid** is a high-level `win32 api` abstraction layer for Windows, allowing users to discover and optimize the system's background environment by writing simple Python scripts. It acts like a uBlock Origin for process management, designed to address the background resource abuse by "must-use software" and aims to become the most comprehensive AutoRun ecosystem on Windows.
 <br /><br />
 
-#### 下载的文件不见了？
+#### Downloaded file disappeared?
 
-由于 SysMaid 的行为涉及系统级的进程监控和操作，某些杀毒软件（如 Windows Defender）可能会将其误报为潜在威胁。为了确保程序正常运行，强烈建议将您的脚本、打包后的 `.exe` 文件或其所在目录添加到杀毒软件的白名单中。
+Due to SysMaid's behavior involving system-level process monitoring and operations, some antivirus software (like Windows Defender) may misreport it as a potential threat. To ensure the program runs correctly, it is strongly recommended to add your script, the packaged `.exe` file, or its directory to your antivirus software's whitelist.
 
-## 核心功能
+## Core Features
 
-*   **简洁的规则定义**：通过 Python 装饰器，直观地定义监控规则。
-*   **进程和服务监控**：轻松监控指定进程的状态，如窗口是否存在、进程是否退出等。
-*   **自动化操作**：在满足条件时自动执行操作，例如结束进程、停止服务、锁定加密卷等。
-*   **可扩展性**：可以轻松添加新的条件和操作，以适应更复杂的需求。
+*   **Concise Rule Definition**: Intuitively define monitoring rules using Python decorators.
+*   **Process and Service Monitoring**: Easily monitor the status of specified processes, such as whether a window exists or if a process has exited.
+*   **Automated Actions**: Automatically execute actions when conditions are met, such as killing a process, stopping a service, or locking an encrypted volume.
+*   **Extensibility**: Easily add new conditions and actions to meet more complex needs.
 
 
-## 快速开始
+## Quick Start
 
-### 安装
+### Installation
 
 ```bash
 pip install sysmaid
 ```
 
-### 使用
+### Usage
 
-创建一个 Python 文件（例如 `my_rules.py`），并添加你的规则：
+Create a Python file (e.g., `my_rules.py`) and add your rules:
 
 ```python
 import sysmaid as maid
 
 if __name__ == "__main__":
-    # 规则1：当 Canva.exe 进程存在但没有窗口时，结束它
+    # Rule 1: Kill Canva.exe if it's running without a window
     Canva = maid.attend('Canva.exe')
     @Canva.has_no_window
     def _():
         maid.kill_process('Canva.exe')
 
-    # 规则2：当 GameViewer.exe 进程退出时，停止相关的服务
+    # Rule 2: Stop the related service when GameViewer.exe exits
     GameViewer = maid.attend('GameViewer.exe')
     @GameViewer.is_exited
     def _():
         maid.stop_service('GameViewerService')
 
-    # 规则3：当 CrossDeviceResume.exe 进程运行时，结束它
+    # Rule 3: Kill CrossDeviceResume.exe when it is running
     CrossDeviceResume = maid.attend('CrossDeviceResume.exe')
     @CrossDeviceResume.is_running
     def _():
         maid.kill_process('CrossDeviceResume.exe')
 
-    # 规则4：当 Macrium Reflect 完成备份或退出时，自动锁定备份盘（D盘）并关闭备份程序
-    # (需确保 D 盘已启用 BitLocker)
+    # Rule 4: When Macrium Reflect finishes a backup or exits, automatically lock the backup drive (D:) and close the program
+    # (Requires BitLocker to be enabled on drive D)
     Screen = maid.attend('Screen')
-    Screen.stop() #截图监听器占用稍大，建议默认关闭
+    Screen.stop()  # The screen listener is resource-intensive, so it's disabled by default
     @Screen.has_windows_look_like('samples\\MacriumSuccess.png')
     def _():
         maid.kill_process('Reflect.exe')
@@ -61,74 +61,74 @@ if __name__ == "__main__":
     Macrium = maid.attend('Reflect.exe')
     @Macrium.is_running
     def _():
-        Screen.start() # maid.attend实例可被规则启停
+        Screen.start()  # maid.attend instances can be started and stopped by rules
     @Macrium.is_exited
     def _():
         maid.lock_volume('D')
-        Screen.stop() # 硬件监听的Stop权限小于Start，采用引用计数控制，可放心多规则并行
+        Screen.stop()   # Stop has lower priority than Start and is reference-counted, ensuring safe parallel use
 
-    # 规则5：当 CPU 连续10秒占用率超过 80% 时，举报占用 CPU 最高的5个进程并记入log
+    # Rule 5: When CPU usage exceeds 80% for 10 consecutive seconds, report the top 5 CPU-consuming processes and log them.
     Cpu = maid.attend('cpu')
     @Cpu.is_too_busy(over=80, duration=10)
-    # 亦可逐逻辑处理器指定阈值，以解决大小核异构CPU上平均占用计算误差问题
+    # You can also specify per-logical-processor thresholds to resolve average utilization calculation errors on heterogeneous CPUs.
     # @Cpu.is_too_busy(over=[40,40,40,40,70,70,70,70], duration=5)
     def _():
         TopProcesses = maid.get_top_processes(5)
         maid.alarm(TopProcesses)
         maid.write_file('logs/TopProcesses.log',TopProcesses)
 
-    # 设置日志级别并启动监控
+    # Set log level and start monitoring
     maid.set_log_level('INFO')
     maid.start()
 ```
 
-然后运行它：
+Then run it:
 
 ```bash
 python my_rules.py
 ```
 
-## 部署：打包为后台服务
+## Deployment: Packaging as a Background Service
 
-为了实现真正的“后台待命”和开机自启，推荐使用 **Nuitka** 将您的规则脚本打包成一个独立的 `.exe` 可执行文件。Nuitka 会将 Python 脚本编译成 C 代码，生成一个高效、无依赖的程序。
+To achieve true "background standby" and auto-start on boot, it is recommended to use **Nuitka** to package your rule script into a standalone `.exe` executable. Nuitka compiles the Python script into C code, generating an efficient, dependency-free program.
 
-**安装 Nuitka：**
+**Install Nuitka:**
 
 ```bash
 pip install nuitka
 ```
 
-**打包指令：**
+**Packaging Command:**
 
 ```bash
 nuitka --standalone --windows-uac-admin --windows-console-mode=disable --mingw64 your_rules.py
 ```
 
-*   `--standalone`: 创建一个包含所有依赖的独立文件夹。
-*   `--windows-uac-admin`: 请求管理员权限，这是停止服务等操作所必需的。
-*   `--windows-console-mode=disable`: 创建一个无窗口的后台应用，运行时不会弹出黑色的控制台窗口。
-*   `--mingw64`: 强制使用MinGW64编译器，防止nuitka找不到c语言编译器导致报错。
-*   `your_rules.py`: 你的规则脚本文件名。
+*   `--standalone`: Creates a standalone folder with all dependencies included.
+*   `--windows-uac-admin`: Requests administrator privileges, which are necessary for operations like stopping services.
+*   `--windows-console-mode=disable`: Creates a windowless background application that won't show a black console window when run.
+*   `--mingw64`: Force the use of the MinGW64 compiler to prevent errors caused by Nuitka failing to find a C compiler.
+*   `your_rules.py`: Your rule script filename.
 
-打包成功后的文件夹名为 `your_rules.dist` 。将其中的 `.exe` 创建快捷方式到系统的“启动”文件夹，即可实现开机自启。
+The output folder after a successful build is named `your_rules.dist` . To enable auto-start on boot, create a shortcut for the `.exe` file inside this folder and move it to the system's "Startup" folder.
 
-## 未来规划
+## Future Plans
 
-SysMaid 的目标不止于简单的进程管理。我们希望将其发展成为 Windows 下最全面的 **AutoRun 生态**，包括但不限于：
+SysMaid's goal extends beyond simple process management. We hope to develop it into the most comprehensive **AutoRun ecosystem** on Windows, including but not limited to:
 
-*   更丰富的触发条件（如网络活动、CPU/内存占用等）。
-*   更多样的响应操作（如修改注册表、文件操作等）。
-*   提供图形用户界面，让不熟悉编程的用户也能轻松使用。
-*   ……
+*   Richer trigger conditions (e.g., network activity, CPU/memory usage).
+*   More diverse response actions (e.g., modifying the registry, file operations).
+*   Providing a graphical user interface to make it accessible for users unfamiliar with programming.
+*   ...
 
-## 贡献
+## Contributing
 
-欢迎任何形式的贡献！如果你有好的想法或发现了 Bug，请随时提交 Issue 或 Pull Request。想要抓取日志，可以使用python状态直接运行，确保日志记录级别在 `INFO` 以上。
+Contributions of any kind are welcome! If you have good ideas or find a bug, please feel free to submit an Issue or Pull Request. To capture logs, you can run the script directly in a Python environment and ensure the logging level is set to `INFO` or higher.
 
 <a href="https://roocode.com/">
 <img height="32" src="https://roocode.com/RooCode-Badge-blk.svg"></img>
 </a>
 
-## 许可证
+## License
 
-本项目基于 [GPLv3 License](https://github.com/zhangtony239/SysMaid/blob/main/LICENSE) 开源。
+This project is open-sourced under the [GPLv3 License](https://github.com/zhangtony239/SysMaid/blob/main/LICENSE).
