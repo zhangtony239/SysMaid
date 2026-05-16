@@ -213,19 +213,19 @@ class ProcessWatcher:
 
     @property
     def has_no_window(self):
-        from .condiction.has_no_window import NoWindowWatchdog
+        from .condition.has_no_window import NoWindowWatchdog
         dog = self._get_or_create_watchdog('no_window', NoWindowWatchdog)
         return dog.has_no_window
     
     @property
     def is_exited(self):
-        from .condiction.is_exited import ExitedWatchdog
+        from .condition.is_exited import ExitedWatchdog
         dog = self._get_or_create_watchdog('is_exited', ExitedWatchdog)
         return dog.is_exited
 
     @property
     def is_running(self):
-        from .condiction.is_running import RunningWatchdog
+        from .condition.is_running import RunningWatchdog
         dog = self._get_or_create_watchdog('is_running', RunningWatchdog)
         return dog.is_running
 
@@ -267,14 +267,14 @@ class HardwareWatcher:
         return self._watchdogs[key]
 
     def is_too_busy(self, over, duration):
-        from .condiction.is_too_busy import IsTooBusyWatchdog
+        from .condition.is_too_busy import IsTooBusyWatchdog
         # 产生一个唯一的key，以便相同的参数得到同一个watchdog
         key = f'is_too_busy_{over}_{duration}'
         dog = self._get_or_create_watchdog(key, IsTooBusyWatchdog, over=over, duration=duration)
         return dog.is_too_busy
 
     def has_windows_look_like(self, template_image_path: str, threshold: float = 0.8, interval: int = 1):
-        from .condiction.has_windows_look_like import WindowsMatchingWatchdog
+        from .condition.has_windows_look_like import WindowsMatchingWatchdog
         key = f'look_like_{template_image_path}_{threshold}_{interval}'
         dog = self._get_or_create_watchdog(key, WindowsMatchingWatchdog, template_image_path=template_image_path, threshold=threshold, interval=interval)
         return dog.is_found
