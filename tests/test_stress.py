@@ -143,8 +143,8 @@ class StressTest(unittest.TestCase):
         maid.kill_process.assert_has_calls(expected_calls, any_order=True)
 
         print(f"--- Stress test successful! {maid.kill_process.call_count} actions were triggered. ---")
-    @patch('sysmaid.condiction.is_too_busy.time')
-    @patch('sysmaid.condiction.is_too_busy.psutil.cpu_percent')
+    @patch('sysmaid.condition.is_too_busy.time')
+    @patch('sysmaid.condition.is_too_busy.psutil.cpu_percent')
     @patch('sysmaid.maid.BaseWatchdog.start')
     def test_cpu_is_too_busy_triggers_action(self, mock_start, mock_cpu_percent, mock_time):
         """
