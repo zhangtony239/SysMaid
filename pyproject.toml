@@ -10,7 +10,7 @@ authors = [
 ]
 description = "For Windows powerusers: A Python-based DSL designed to easily discover and govern unruly background applications and services."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 license = { text = "GPL-3.0-only" }
 classifiers = [
     "Programming Language :: Python :: 3",
@@ -26,7 +26,7 @@ dependencies = [
 
 [project.optional-dependencies]
 test = [
-    "pytest",
+    "pytest>=9.0.3",
 ]
 
 [tool.hatch.build.targets.wheel]

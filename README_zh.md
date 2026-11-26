@@ -24,7 +24,7 @@
 pip install sysmaid
 ```
 
-*需要 Python 3.9 或更高版本*
+*需要 Python 3.10 或更高版本*
 
 ### 使用
 

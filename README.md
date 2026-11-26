@@ -26,7 +26,7 @@ Due to SysMaid's behavior involving system-level process monitoring and operatio
 pip install sysmaid
 ```
 
-*Requires Python 3.9 or higher*
+*Requires Python 3.10 or higher*
 
 ### Usage
 
