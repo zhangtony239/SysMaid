@@ -1,3 +1,5 @@
+
+
 # SysMaid [![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fzhangtony239%2FSysMaid.svg?type=shield&issueType=security)](https://app.fossa.com/projects/git%2Bgithub.com%2Fzhangtony239%2FSysMaid?ref=badge_shield&issueType=security)
 [简体中文](https://github.com/zhangtony239/SysMaid/blob/main/README_zh.md)
 
@@ -23,6 +25,8 @@ Due to SysMaid's behavior involving system-level process monitoring and operatio
 ```bash
 pip install sysmaid
 ```
+
+*(Requires Python 3.9 or higher)*
 
 ### Usage
 
