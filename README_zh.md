@@ -24,6 +24,8 @@
 pip install sysmaid
 ```
 
+*需要 Python 3.9 或更高版本*
+
 ### 使用
 
 创建一个 Python 文件（例如 `my_rules.py`），并添加你的规则：
